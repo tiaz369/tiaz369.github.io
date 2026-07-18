@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Name — Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --surface: #141414;
+      --border: #222;
+      --text: #e8e6e0;
+      --muted: #666;
+      --accent: #c8b8a2;
+      --film: #e8d5b0;
+      --ai: #8fb8d0;
+      --art: #c4a882;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.6;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 48px;
+      background: rgba(13,13,13,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.1rem;
+      letter-spacing: 0.02em;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 36px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 48px;
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .hero-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(3rem, 8vw, 6rem);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 32px;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .hero-desc {
+      max-width: 520px;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.8;
+      margin-bottom: 48px;
+    }
+
+    .hero-links {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 12px 28px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      font-size: 0.82rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .btn-primary {
+      background: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+    }
+
+    .btn-primary:hover { opacity: 0.85; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .btn-ghost:hover { color: var(--text); border-color: var(--text); }
+
+    /* SECTION COMMON */
+    section {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 100px 48px;
+      border-top: 1px solid var(--border);
+    }
+
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 48px;
+    }
+
+    .section-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2.4rem;
+      letter-spacing: -0.01em;
+      margin-bottom: 16px;
+      line-height: 1.15;
+    }
+
+    .section-sub {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-bottom: 56px;
+      max-width: 480px;
+      line-height: 1.7;
+    }
+
+    /* FILM SECTION */
+    #film .section-title { color: var(--film); }
+
+    .film-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 2px;
+    }
+
+    .film-card {
+      background: var(--surface);
+      aspect-ratio: 2/3;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .film-card:hover .film-overlay { opacity: 1; }
+
+    .film-poster-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Serif Display', serif;
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-align: center;
+      padding: 16px;
+      line-height: 1.4;
+    }
+
+    .film-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 16px;
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+
+    .film-overlay-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1rem;
+      color: var(--film);
+      margin-bottom: 4px;
+    }
+
+    .film-overlay-year {
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .film-overlay-note {
+      font-size: 0.78rem;
+      color: var(--text);
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    /* AI SECTION */
+    #ai .section-title { color: var(--ai); }
+
+    .ai-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+    }
+
+    .ai-card {
+      background: var(--surface);
+      padding: 32px;
+      transition: background 0.2s;
+    }
+
+    .ai-card:hover { background: #1a1a1a; }
+
+    .ai-card-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ai);
+      margin-bottom: 12px;
+    }
+
+    .ai-card-title {
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 10px;
+      line-height: 1.35;
+    }
+
+    .ai-card-desc {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    /* ART SECTION */
+    #art .section-title { color: var(--art); }
+
+    .art-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+    }
+
+    .art-item {
+      aspect-ratio: 1;
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .art-item::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 1px solid transparent;
+      transition: border-color 0.2s;
+    }
+
+    .art-item:hover::after { border-color: var(--art); }
+
+    /* NOW SECTION */
+    #now {
+      padding-bottom: 140px;
+    }
+
+    .now-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .now-item {
+      display: flex;
+      gap: 32px;
+      padding: 28px 0;
+      border-bottom: 1px solid var(--border);
+      align-items: baseline;
+    }
+
+    .now-item-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      min-width: 80px;
+      flex-shrink: 0;
+    }
+
+    .now-item-text {
+      font-size: 0.92rem;
+      line-height: 1.65;
+      color: var(--text);
+    }
+
+    .now-item-text a {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s;
+    }
+
+    .now-item-text a:hover { border-bottom-color: var(--accent); }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 48px;
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-left {
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .footer-right {
+      display: flex;
+      gap: 20px;
+    }
+
+    .footer-right a {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      transition: color 0.2s;
+    }
+
+    .footer-right a:hover { color: var(--text); }
+
+    /* SCROLL HINT */
+    .scroll-hint {
+      position: absolute;
+      bottom: 48px;
+      left: 48px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .scroll-line {
+      width: 40px;
+      height: 1px;
+      background: var(--muted);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scroll-line::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%;
+      height: 100%;
+      background: var(--text);
+      animation: scanline 2s ease-in-out infinite;
+    }
+
+    @keyframes scanline {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 640px) {
+      nav { padding: 16px 24px; }
+      .nav-links { display: none; }
+      .hero, section { padding-left: 24px; padding-right: 24px; }
+      .hero h1 { font-size: 3rem; }
+      .ai-grid { grid-template-columns: 1fr; }
+      .art-strip { grid-template-columns: repeat(2, 1fr); }
+      footer { flex-direction: column; gap: 16px; padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a class="nav-logo" href="#">YN</a>
+    <ul class="nav-links">
+      <li><a href="#film">Film</a></li>
+      <li><a href="#ai">AI & Robotics</a></li>
+      <li><a href="#art">Visual</a></li>
+      <li><a href="#now">Now</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <p class="hero-eyebrow">Based in London · Open to work</p>
+    <h1>Curious about<br><em>machines</em><br>that see the world.</h1>
+    <p class="hero-desc">
+      Somewhere between film posters and foundation models. Interested in AI, robotics, and anything that changes how we perceive things.
+    </p>
+    <div class="hero-links">
+      <a href="#ai" class="btn btn-primary">What I'm Following</a>
+      <a href="mailto:you@email.com" class="btn btn-ghost">Say Hello</a>
+    </div>
+    <div class="scroll-hint">
+      <span class="scroll-line"></span>
+      Scroll
+    </div>
+  </div>
+
+  <!-- FILM -->
+  <section id="film">
+    <p class="section-label">Section 01 — Film</p>
+    <h2 class="section-title">Frames I keep returning to</h2>
+    <p class="section-sub">A running log of films that stuck. Not ranked — just real.</p>
+
+    <div class="film-grid">
+      <!-- Add your own films here — replace the placeholder text -->
+      <div class="film-card">
+        <div class="film-poster-placeholder">Your<br>Film<br>Here</div>
+        <div class="film-overlay">
+          <div class="film-overlay-title">Film Title</div>
+          <div class="film-overlay-year">Director · Year</div>
+          <div class="film-overlay-note">One thing you noticed that others missed.</div>
+        </div>
+      </div>
+      <div class="film-card">
+        <div class="film-poster-placeholder" style="background:#1a1510;">2001:<br>A Space<br>Odyssey</div>
+        <div class="film-overlay">
+          <div class="film-overlay-title">2001: A Space Odyssey</div>
+          <div class="film-overlay-year">Kubrick · 1968</div>
+          <div class="film-overlay-note">The most honest film about the gap between human intention and machine behavior.</div>
+        </div>
+      </div>
+      <div class="film-card">
+        <div class="film-poster-placeholder" style="background:#0f1520;">Blade<br>Runner<br>2049</div>
+        <div class="film-overlay">
+          <div class="film-overlay-title">Blade Runner 2049</div>
+          <div class="film-overlay-year">Villeneuve · 2017</div>
+          <div class="film-overlay-note">About memory and what makes experience real — questions I think about in AI too.</div>
+        </div>
+      </div>
+      <div class="film-card">
+        <div class="film-poster-placeholder" style="background:#1a1015;">Your<br>Film<br>Here</div>
+        <div class="film-overlay">
+          <div class="film-overlay-title">Film Title</div>
+          <div class="film-overlay-year">Director · Year</div>
+          <div class="film-overlay-note">Your note here.</div>
+        </div>
+      </div>
+      <div class="film-card">
+        <div class="film-poster-placeholder" style="background:#0e1218;">Your<br>Film<br>Here</div>
+        <div class="film-overlay">
+          <div class="film-overlay-title">Film Title</div>
+          <div class="film-overlay-year">Director · Year</div>
+          <div class="film-overlay-note">Your note here.</div>
+        </div>
+      </div>
+      <div class="film-card">
+        <div class="film-poster-placeholder" style="background:#14110e;">Your<br>Film<br>Here</div>
+        <div class="film-overlay">
+          <div class="film-overlay-title">Film Title</div>
+          <div class="film-overlay-year">Director · Year</div>
+          <div class="film-overlay-note">Your note here.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI & ROBOTICS -->
+  <section id="ai">
+    <p class="section-label">Section 02 — AI & Robotics</p>
+    <h2 class="section-title">What I'm paying attention to</h2>
+    <p class="section-sub">Papers, people, and directions I find genuinely exciting. Updated as I go.</p>
+
+    <div class="ai-grid">
+      <div class="ai-card">
+        <p class="ai-card-tag">Embodied AI</p>
+        <p class="ai-card-title">Physical intelligence is the next frontier</p>
+        <p class="ai-card-desc">Following Pi.ai, Figure, and what Jim Fan's group at NVIDIA is doing with foundation models for robots. The gap between language and physical grounding is the interesting problem.</p>
+      </div>
+      <div class="ai-card">
+        <p class="ai-card-tag">Reading</p>
+        <p class="ai-card-title">Paper: ADD PAPER TITLE HERE</p>
+        <p class="ai-card-desc">What you found interesting about it. One or two sentences. Keep it honest — not a summary, just what actually grabbed you.</p>
+      </div>
+      <div class="ai-card">
+        <p class="ai-card-tag">People I Follow</p>
+        <p class="ai-card-title">Jim Fan, Andrej Karpathy, ...</p>
+        <p class="ai-card-desc">Add the researchers and builders whose thinking you track. Why them? What's their lens that you find useful?</p>
+      </div>
+      <div class="ai-card">
+        <p class="ai-card-tag">Currently Learning</p>
+        <p class="ai-card-title">Add what you're studying now</p>
+        <p class="ai-card-desc">Even as a beginner — what are you going through? A course, a book, a repo you're trying to understand? Showing the learning is more honest than hiding it.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- VISUAL / ART -->
+  <section id="art">
+    <p class="section-label">Section 03 — Visual</p>
+    <h2 class="section-title">Things I photographed</h2>
+    <p class="section-sub">Paintings at museums, moments between places. No agenda — just what caught my eye.</p>
+
+    <div class="art-strip">
+      <div class="art-item">[ photo 1 ]</div>
+      <div class="art-item">[ photo 2 ]</div>
+      <div class="art-item">[ photo 3 ]</div>
+      <div class="art-item">[ photo 4 ]</div>
+      <div class="art-item">[ photo 5 ]</div>
+      <div class="art-item">[ photo 6 ]</div>
+    </div>
+  </section>
+
+  <!-- NOW -->
+  <section id="now">
+    <p class="section-label">Section 04 — Now</p>
+    <h2 class="section-title">What's happening</h2>
+    <p class="section-sub">A snapshot of where I am. Last updated July 2026.</p>
+
+    <ul class="now-list">
+      <li class="now-item">
+        <span class="now-item-label">Work</span>
+        <span class="now-item-text">Wrapping up a role in study abroad consulting in London. Looking for my next thing — ideally in AI or robotics.</span>
+      </li>
+      <li class="now-item">
+        <span class="now-item-label">Learning</span>
+        <span class="now-item-text">Building coding fundamentals from scratch. Interested in how models get grounded in the physical world.</span>
+      </li>
+      <li class="now-item">
+        <span class="now-item-label">Reading</span>
+        <span class="now-item-text">Add the paper or book you're reading right now.</span>
+      </li>
+      <li class="now-item">
+        <span class="now-item-label">Watching</span>
+        <span class="now-item-text">Add the film or series you're into.</span>
+      </li>
+      <li class="now-item">
+        <span class="now-item-label">Thinking</span>
+        <span class="now-item-text">One question you're sitting with lately.</span>
+      </li>
+    </ul>
+  </section>
+
+  <footer>
+    <div class="footer-left">© 2026 · Built with intention</div>
+    <div class="footer-right">
+      <a href="https://github.com" target="_blank">GitHub</a>
+      <a href="https://linkedin.com" target="_blank">LinkedIn</a>
+      <a href="mailto:you@email.com">Email</a>
+    </div>
+  </footer>
+
+</body>
+</html>
