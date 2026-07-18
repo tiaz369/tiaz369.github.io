@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>earthdimension</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@300;400&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #f9f7f4; --bg2: #f2efe9; --border: #e3dfd8;
+      --text: #1b1916; --muted: #908b83; --faint: #c4bfb7;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; font-weight:300; line-height:1.6; -webkit-font-smoothing:antialiased; }
+
+    nav { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; justify-content:space-between; align-items:center; padding:20px 60px; background:rgba(249,247,244,0.94); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); }
+    .logo { font-family:'Cormorant Garamond',serif; font-size:1.2rem; font-weight:300; letter-spacing:0.08em; color:var(--text); text-decoration:none; }
+    .nav-links { display:flex; gap:40px; list-style:none; }
+    .nav-links a { font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); text-decoration:none; transition:color 0.2s; }
+    .nav-links a:hover { color:var(--text); }
+
+    .hero { min-height:100vh; display:flex; align-items:center; padding:0 60px; max-width:1100px; margin:0 auto; }
+    .hero-inner { max-width:580px; }
+    .hero-eyebrow { font-family:'JetBrains Mono',monospace; font-size:0.65rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--faint); margin-bottom:28px; display:block; }
+    .hero h1 { font-family:'Cormorant Garamond',serif; font-size:clamp(3rem,6vw,5.2rem); font-weight:300; line-height:1.08; letter-spacing:-0.01em; margin-bottom:28px; }
+    .hero h1 em { font-style:italic; color:var(--muted); }
+    .hero-sub { font-size:0.9rem; color:var(--muted); line-height:1.9; max-width:420px; margin-bottom:44px; }
+    .hero-links { display:flex; gap:16px; }
+    .btn { display:inline-block; padding:11px 28px; font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; text-decoration:none; border-radius:1px; font-family:'Inter',sans-serif; font-weight:400; transition:all 0.2s; cursor:pointer; }
+    .btn-solid { background:var(--text); color:var(--bg); border:1px solid var(--text); }
+    .btn-solid:hover { opacity:0.75; }
+    .btn-ghost { background:transparent; color:var(--muted); border:1px solid var(--border); }
+    .btn-ghost:hover { border-color:var(--text); color:var(--text); }
+
+    .section { max-width:1100px; margin:0 auto; padding:96px 60px; border-top:1px solid var(--border); }
+    .sec-top { display:flex; align-items:baseline; gap:20px; margin-bottom:56px; }
+    .sec-index { font-family:'JetBrains Mono',monospace; font-size:0.6rem; color:var(--faint); letter-spacing:0.1em; flex-shrink:0; }
+    .sec-title { font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:300; letter-spacing:0.01em; }
+    .sec-aside { margin-left:auto; font-size:0.72rem; color:var(--muted); max-width:200px; text-align:right; line-height:1.65; flex-shrink:0; }
+
+    .about-layout { display:grid; grid-template-columns:1fr 260px; gap:80px; align-items:start; }
+    .about-body { font-size:0.95rem; line-height:2.1; }
+    .about-meta { display:flex; flex-direction:column; }
+    .meta-row { padding:14px 0; border-bottom:1px solid var(--border); }
+    .meta-row:first-child { border-top:1px solid var(--border); }
+    .meta-label { font-family:'JetBrains Mono',monospace; font-size:0.58rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--faint); margin-bottom:4px; }
+    .meta-value { font-size:0.82rem; line-height:1.5; }
+
+    /* VISUAL */
+    .visual-intro { font-size:0.88rem; color:var(--muted); line-height:1.9; max-width:520px; margin-bottom:48px; margin-top:-32px; }
+
+    .photo-grid {
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      grid-template-rows:auto auto;
+      gap:4px;
+    }
+
+    .photo-cell {
+      position:relative; overflow:hidden;
+      background:var(--bg2); cursor:pointer;
+    }
+    .photo-cell.land { aspect-ratio:4/3; }
+    .photo-cell.port { aspect-ratio:3/4; }
+
+    .photo-cell img {
+      width:100%; height:100%; object-fit:cover; display:block;
+      transition:transform 0.6s ease;
+    }
+    .photo-cell:hover img { transform:scale(1.04); }
+
+    .photo-overlay {
+      position:absolute; inset:0;
+      background:linear-gradient(to top, rgba(27,25,22,0.8) 0%, rgba(27,25,22,0) 50%);
+      opacity:0; transition:opacity 0.3s;
+      display:flex; flex-direction:column; justify-content:flex-end;
+      padding:18px 20px;
+    }
+    .photo-cell:hover .photo-overlay { opacity:1; }
+    .overlay-title { font-family:'Cormorant Garamond',serif; font-size:1rem; color:#f9f7f4; font-weight:300; }
+    .overlay-sub { font-family:'JetBrains Mono',monospace; font-size:0.58rem; color:rgba(249,247,244,0.55); letter-spacing:0.06em; margin-top:4px; }
+
+    /* LIGHTBOX */
+    .lightbox {
+      display:none; position:fixed; inset:0; z-index:1000;
+      background:rgba(10,9,8,0.95);
+      align-items:center; justify-content:center;
+      cursor:zoom-out;
+    }
+    .lightbox.active { display:flex; }
+    .lightbox img {
+      max-width:90vw; max-height:90vh;
+      object-fit:contain;
+      box-shadow:0 32px 80px rgba(0,0,0,0.6);
+    }
+    .lightbox-caption {
+      position:absolute; bottom:40px; left:50%; transform:translateX(-50%);
+      text-align:center;
+    }
+    .lightbox-caption-title { font-family:'Cormorant Garamond',serif; font-size:1rem; color:#f9f7f4; font-weight:300; }
+    .lightbox-caption-sub { font-family:'JetBrains Mono',monospace; font-size:0.6rem; color:rgba(249,247,244,0.5); letter-spacing:0.08em; margin-top:4px; }
+    .lightbox-close {
+      position:absolute; top:32px; right:40px;
+      font-family:'JetBrains Mono',monospace; font-size:0.65rem;
+      letter-spacing:0.1em; text-transform:uppercase;
+      color:rgba(249,247,244,0.5); cursor:pointer; transition:color 0.2s;
+    }
+    .lightbox-close:hover { color:#f9f7f4; }
+
+    /* AI */
+    .ai-intro { font-size:0.88rem; color:var(--muted); line-height:1.9; max-width:520px; margin-bottom:48px; margin-top:-32px; }
+    .ai-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 60px; }
+    .ai-col-label { font-family:'JetBrains Mono',monospace; font-size:0.58rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); padding-bottom:14px; border-bottom:1px solid var(--border); }
+    .ai-entry { padding:20px 0; border-bottom:1px solid var(--border); }
+    .ai-entry:last-child { border-bottom:none; }
+    .ai-entry-title { font-size:0.88rem; font-weight:400; margin-bottom:5px; }
+    .ai-entry-body { font-size:0.78rem; color:var(--muted); line-height:1.75; }
+
+    /* NEXART */
+    .nexart-layout { display:grid; grid-template-columns:1fr 260px; gap:80px; align-items:start; }
+    .nexart-body { font-size:0.93rem; line-height:1.95; }
+    .nexart-body p { margin-bottom:18px; }
+    .nexart-body p:last-child { margin-bottom:0; }
+    .nexart-sidebar { display:flex; flex-direction:column; }
+    .nex-row { padding:14px 0; border-bottom:1px solid var(--border); }
+    .nex-row:first-child { border-top:1px solid var(--border); }
+    .nex-label { font-family:'JetBrains Mono',monospace; font-size:0.58rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--faint); margin-bottom:4px; }
+    .nex-value { font-size:0.82rem; line-height:1.5; }
+
+    /* FILM */
+    .film-intro { font-size:0.88rem; color:var(--muted); line-height:1.9; max-width:520px; margin-bottom:48px; margin-top:-32px; }
+    .film-row { display:grid; grid-template-columns:200px 1fr 80px; gap:32px; align-items:baseline; padding:22px 0; border-bottom:1px solid var(--border); }
+    .film-row:first-child { border-top:1px solid var(--border); }
+    .film-name { font-family:'Cormorant Garamond',serif; font-size:1.05rem; font-weight:300; }
+    .film-director { font-family:'JetBrains Mono',monospace; font-size:0.58rem; color:var(--faint); letter-spacing:0.06em; margin-top:4px; }
+    .film-thought { font-size:0.8rem; color:var(--muted); line-height:1.75; }
+    .film-genre { font-family:'JetBrains Mono',monospace; font-size:0.58rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--faint); text-align:right; }
+
+    /* NOW */
+    .now-date { font-family:'JetBrains Mono',monospace; font-size:0.6rem; color:var(--faint); letter-spacing:0.1em; margin-bottom:40px; margin-top:-32px; }
+    .now-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--border); }
+    .now-cell { background:var(--bg); padding:28px; }
+    .now-cell-label { font-family:'JetBrains Mono',monospace; font-size:0.58rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--faint); margin-bottom:10px; }
+    .now-cell-text { font-size:0.84rem; line-height:1.8; }
+
+    footer { border-top:1px solid var(--border); max-width:1100px; margin:0 auto; padding:28px 60px; display:flex; justify-content:space-between; align-items:center; }
+    .footer-sig { font-family:'Cormorant Garamond',serif; font-size:1rem; font-weight:300; letter-spacing:0.04em; }
+    .footer-nav { display:flex; gap:28px; }
+    .footer-nav a { font-size:0.68rem; color:var(--muted); text-decoration:none; letter-spacing:0.1em; text-transform:uppercase; transition:color 0.2s; }
+    .footer-nav a:hover { color:var(--text); }
+    .footer-yr { font-family:'JetBrains Mono',monospace; font-size:0.6rem; color:var(--faint); }
+
+    @media (max-width:768px) {
+      nav { padding:14px 20px; }
+      .nav-links { display:none; }
+      .hero { padding:120px 20px 60px; min-height:auto; }
+      .section { padding:60px 20px; }
+      .about-layout, .nexart-layout { grid-template-columns:1fr; gap:36px; }
+      .about-meta { display:none; }
+      .photo-grid { grid-template-columns:repeat(2,1fr); }
+      .ai-grid { grid-template-columns:1fr; }
+      .film-row { grid-template-columns:1fr; gap:6px; }
+      .film-genre { display:none; }
+      .now-grid { grid-template-columns:1fr; }
+      .sec-aside { display:none; }
+      footer { flex-direction:column; gap:16px; padding:24px 20px; text-align:center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <div class="lightbox-close" onclick="closeLightbox()">Close ✕</div>
+  <img id="lightbox-img" src="" alt=""/>
+  <div class="lightbox-caption">
+    <div class="lightbox-caption-title" id="lightbox-title"></div>
+    <div class="lightbox-caption-sub" id="lightbox-sub"></div>
+  </div>
+</div>
+
+<nav>
+  <a class="logo" href="#">earthdimension</a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#visual">Visual</a></li>
+    <li><a href="#ai">AI & Robotics</a></li>
+    <li><a href="#nexart">Nexart</a></li>
+    <li><a href="#film">Film</a></li>
+    <li><a href="#now">Now</a></li>
+  </ul>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <span class="hero-eyebrow">London · 2026</span>
+    <h1>Between<br><em>stories</em> and<br><em>machines.</em></h1>
+    <p class="hero-sub">I pay attention to how things are made — paintings, systems, ideas, machines. Right now that attention is pointed at AI and what it means for the physical world.</p>
+    <div class="hero-links">
+      <a href="https://uk.linkedin.com/in/linfang-zhong-ab0b7b195" target="_blank" class="btn btn-solid">LinkedIn</a>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="about">
+  <div class="sec-top">
+    <span class="sec-index">00</span>
+    <h2 class="sec-title">About</h2>
+  </div>
+  <div class="about-layout">
+    <div class="about-body">
+      Tia. Based in London. I pay attention to how things are made — paintings, systems, ideas, machines.<br><br>
+      Right now that attention is pointed at AI and robotics. I'm not an engineer, but I'm a careful observer, and I think that's its own kind of useful.<br><br>
+      Founder of Nexart. Previously in education and consulting.
+    </div>
+    <div class="about-meta">
+      <div class="meta-row"><div class="meta-label">Location</div><div class="meta-value">London, UK</div></div>
+      <div class="meta-row"><div class="meta-label">Languages</div><div class="meta-value">Chinese · English</div></div>
+      <div class="meta-row"><div class="meta-label">Interests</div><div class="meta-value">AI · Robotics · Film · Art</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="visual">
+  <div class="sec-top">
+    <span class="sec-index">01</span>
+    <h2 class="sec-title">Visual</h2>
+    <span class="sec-aside">Museum floors, painting details, things that stopped me.</span>
+  </div>
+  <p class="visual-intro">I photograph paintings up close — not to document them, but because the texture of oil paint two inches from your face is a different image than what the artist intended. Click to view.</p>
+
+  <div class="photo-grid">
+    <div class="photo-cell port" onclick="openLightbox('IMG_6499.jpeg','Ophelia (detail)','Millais · Tate Britain')">
+      <img src="IMG_6499.jpeg" alt="Millais Ophelia"/>
+      <div class="photo-overlay">
+        <div class="overlay-title">Ophelia</div>
+        <div class="overlay-sub">Millais · Tate Britain</div>
+      </div>
+    </div>
+    <div class="photo-cell land" onclick="openLightbox('IMG_7275.jpeg','Water Lilies','Monet · National Gallery')">
+      <img src="IMG_7275.jpeg" alt="Monet Water Lilies"/>
+      <div class="photo-overlay">
+        <div class="overlay-title">Water Lilies</div>
+        <div class="overlay-sub">Monet · National Gallery</div>
+      </div>
+    </div>
+    <div class="photo-cell port" onclick="openLightbox('IMG_6659.jpeg','The Umbrellas (detail)','Renoir · National Gallery')">
+      <img src="IMG_6659.jpeg" alt="Renoir Umbrellas"/>
+      <div class="photo-overlay">
+        <div class="overlay-title">The Umbrellas</div>
+        <div class="overlay-sub">Renoir · National Gallery</div>
+      </div>
+    </div>
+    <div class="photo-cell land" onclick="openLightbox('IMG_7237.jpeg','Bathers at Asnières (detail)','Seurat · National Gallery')">
+      <img src="IMG_7237.jpeg" alt="Seurat Bathers"/>
+      <div class="photo-overlay">
+        <div class="overlay-title">Bathers at Asnières</div>
+        <div class="overlay-sub">Seurat · National Gallery</div>
+      </div>
+    </div>
+    <div class="photo-cell port" onclick="openLightbox('eee12da30bde2966454d3e93304adac1.jpeg','Refik Anadol','Machine Hallucinations')">
+      <img src="eee12da30bde2966454d3e93304adac1.jpeg" alt="Refik Anadol"/>
+      <div class="photo-overlay">
+        <div class="overlay-title">Machine Hallucinations</div>
+        <div class="overlay-sub">Refik Anadol</div>
+      </div>
+    </div>
+    <div class="photo-cell port" onclick="openLightbox('e6ec54f32b4f0acdbf99a17fd1953a11.jpeg','Portrait','Museum visit')">
+      <img src="e6ec54f32b4f0acdbf99a17fd1953a11.jpeg" alt="Portrait"/>
+      <div class="photo-overlay">
+        <div class="overlay-title">Portrait</div>
+        <div class="overlay-sub">Museum visit</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="ai">
+  <div class="sec-top">
+    <span class="sec-index">02</span>
+    <h2 class="sec-title">AI & Robotics</h2>
+    <span class="sec-aside">What I'm paying attention to.</span>
+  </div>
+  <p class="ai-intro">I'm not an engineer. But I watch closely — following the people building things, reading what I can, trying to understand what's actually changing rather than what's being announced.</p>
+  <div class="ai-grid">
+    <div>
+      <div class="ai-col-label">Directions</div>
+      <div class="ai-entry"><div class="ai-entry-title">Embodied AI</div><div class="ai-entry-body">Robots that operate in the real world. The gap between language and physical grounding is where the hard problems live — and where I think the most interesting things will happen.</div></div>
+      <div class="ai-entry"><div class="ai-entry-title">AI agent identity</div><div class="ai-entry-body">As agents become more capable, how they represent themselves — and how we verify that — becomes urgent. This is connected to what I'm building with Nexart.</div></div>
+      <div class="ai-entry"><div class="ai-entry-title">Foundation models for robotics</div><div class="ai-entry-body">A single model controlling many different robots — generalizing across hardware the way language models generalize across tasks. Following Physical Intelligence, Figure, NVIDIA.</div></div>
+    </div>
+    <div>
+      <div class="ai-col-label">People I follow</div>
+      <div class="ai-entry"><div class="ai-entry-title">Jim Fan</div><div class="ai-entry-body">Senior research scientist at NVIDIA. Working on foundation models for robotics — generalization that would make a robot as flexible as a language model.</div></div>
+      <div class="ai-entry"><div class="ai-entry-title">Andrej Karpathy</div><div class="ai-entry-body">Makes the inside of AI systems legible to people who weren't trained as ML engineers. The way he explains things is rare.</div></div>
+      <div class="ai-entry"><div class="ai-entry-title">On X</div><div class="ai-entry-body">Tracking researchers, founders, and observers across embodied AI, agent systems, and where art meets machine intelligence.</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="nexart">
+  <div class="sec-top">
+    <span class="sec-index">03</span>
+    <h2 class="sec-title">Nexart</h2>
+    <span class="sec-aside">A project I started. Still in motion.</span>
+  </div>
+  <div class="nexart-layout">
+    <div class="nexart-body">
+      <p>Nexart started with a simple frustration: the infrastructure connecting artists to collectors — especially women artists in places where opportunity is scarce — was broken or absent. The original idea was to use NFTs as a bridge: provable ownership, global access.</p>
+      <p>The NFT market moved in ways that made that harder. But while watching the space closely, I noticed something else. As AI agents become more capable, the question of identity becomes critical — how does an agent prove it is who it says it is? How do you give an AI a verifiable, unique identity that persists?</p>
+      <p>NFTs are actually well-suited to this. So Nexart evolved. I drafted a patent around AI agent identity and filed it in the UK. It's pending. The original mission is still there — the infrastructure question is just unsolved.</p>
+    </div>
+    <div class="nexart-sidebar">
+      <div class="nex-row"><div class="nex-label">Type</div><div class="nex-value">Solo founder</div></div>
+      <div class="nex-row"><div class="nex-label">Original mission</div><div class="nex-value">Women artists × collectors × NFT infrastructure</div></div>
+      <div class="nex-row"><div class="nex-label">Current focus</div><div class="nex-value">AI agent identity — provable, unique, persistent</div></div>
+      <div class="nex-row"><div class="nex-label">IP</div><div class="nex-value">UK Patent Application No. 2604570.8 · pending</div></div>
+      <div class="nex-row"><div class="nex-label">Status</div><div class="nex-value">Active · early stage</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="film">
+  <div class="sec-top">
+    <span class="sec-index">04</span>
+    <h2 class="sec-title">Film</h2>
+    <span class="sec-aside">Films I return to.</span>
+  </div>
+  <p class="film-intro">The films I keep coming back to share something: they make you believe in a reality with different rules — not by explaining it, but by committing to it completely.</p>
+  <div class="film-list">
+    <div class="film-row">
+      <div><div class="film-name">Interstellar</div><div class="film-director">Nolan · 2014</div></div>
+      <div class="film-thought">Love as a force that crosses dimensions — not metaphor, but physics. The tesseract treats emotion and space-time as the same kind of thing. I find that genuinely moving.</div>
+      <div class="film-genre">Sci-fi</div>
+    </div>
+    <div class="film-row">
+      <div><div class="film-name">Inception</div><div class="film-director">Nolan · 2010</div></div>
+      <div class="film-thought">Consciousness constructs reality. A dream is real if the rules are consistent enough. I think about this more now — an AI's world is also a constructed one.</div>
+      <div class="film-genre">Thriller</div>
+    </div>
+    <div class="film-row">
+      <div><div class="film-name">The Lord of the Rings</div><div class="film-director">Jackson · 2001–03</div></div>
+      <div class="film-thought">Purity of heart against overwhelming power. Everything in Middle-earth has weight and history — the world feels real because it was built with that kind of care.</div>
+      <div class="film-genre">Epic</div>
+    </div>
+    <div class="film-row">
+      <div><div class="film-name">Spirited Away</div><div class="film-director">Miyazaki · 2001</div></div>
+      <div class="film-thought">A child enters a world with completely different rules and survives by staying true to herself. The best films don't explain their logic — they make you believe it within minutes.</div>
+      <div class="film-genre">Animation</div>
+    </div>
+    <div class="film-row">
+      <div><div class="film-name">Rick and Morty</div><div class="film-director">Harmon & Roiland · 2013–</div></div>
+      <div class="film-thought">Rewatched more times than I can count. A genius who has seen every possible universe and still chooses to come home — I can't fully explain why that gets me, but it does.</div>
+      <div class="film-genre">Animation</div>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="now">
+  <div class="sec-top">
+    <span class="sec-index">05</span>
+    <h2 class="sec-title">Now</h2>
+  </div>
+  <p class="now-date">Last updated · July 2026</p>
+  <div class="now-grid">
+    <div class="now-cell">
+      <div class="now-cell-label">Nexart</div>
+      <div class="now-cell-text">UK patent pending. Watching the space, thinking about next steps. The problem hasn't gone away — the timing is the question.</div>
+    </div>
+    <div class="now-cell">
+      <div class="now-cell-label">Following</div>
+      <div class="now-cell-text">Embodied AI, robotics, agent systems. Tracking what's being built at Physical Intelligence, Figure, NVIDIA. Reading more than I'm publishing.</div>
+    </div>
+    <div class="now-cell">
+      <div class="now-cell-label">Watching</div>
+      <div class="now-cell-text">Always have something queued. Update this with whatever film or series you're into right now.</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-sig">earthdimension</div>
+  <nav class="footer-nav">
+    <a href="https://github.com/tiaz369" target="_blank">GitHub</a>
+    <a href="https://uk.linkedin.com/in/linfang-zhong-ab0b7b195" target="_blank">LinkedIn</a>
+  </nav>
+  <div class="footer-yr">© 2026</div>
+</footer>
+
+<script>
+  function openLightbox(src, title, sub) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox-title').textContent = title;
+    document.getElementById('lightbox-sub').textContent = sub;
+    document.getElementById('lightbox').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLightbox();
+  });
+</script>
+
+</body>
+</html>
