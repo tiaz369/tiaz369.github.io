@@ -197,7 +197,7 @@
   <!-- 右上角：进度 / 声音 / 进入结尾 -->
   <div id="status" class="ui">
     <div id="progress">已发现 0/6</div>
-    <button class="tool hidden" id="soundBtn">🔇 声音</button>
+    <button class="tool" id="soundBtn">🔇 声音</button>
     <button class="tool hidden" id="endBtn">进入结尾 →</button>
   </div>
 
@@ -314,9 +314,6 @@
       { file: 'images/v1889-orsay.jpg',   short: '1889 · 巴黎',       caption: "1889年 · 巴黎奥赛博物馆 · Musée d'Orsay, Paris" }
     ];
 
-    // ★ 环境音：找到确认是 CC0 授权的声音文件后，把文件名填在这里（例如 'sound/birds.mp3'），
-    //   声音按钮就会自动出现。现在留空 = 按钮隐藏。
-    const SOUND_URL = '';
 
     // ========== 1. 颜色（来自梵高的信） ==========
     const C = {
@@ -789,17 +786,75 @@
       togglePopup('shot', true);
     };
 
-    // ========== 18. 声音（默认静音；没有 CC0 声音文件时按钮隐藏） ==========
-    if (SOUND_URL) {
-      const audio = new Audio(SOUND_URL);
-      audio.loop = true; audio.volume = 0.5;
-      const btn = $('soundBtn');
-      btn.classList.remove('hidden');
-      btn.onclick = () => {
-        if (audio.paused) { audio.play(); btn.textContent = '🔊 声音'; }
-        else { audio.pause(); btn.textContent = '🔇 声音'; }
-      };
+    // ========== 18. 声音：用代码现场合成的鸟叫 + 轻风声（默认静音） ==========
+    // 不用任何声音文件，所以没有版权问题。浏览器规定必须点击后才能出声，所以默认是静音。
+    let actx = null, master = null, soundOn = false, birdTimer = null;
+    function setupAudio() {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      master = actx.createGain();
+      master.gain.value = 0;
+      master.connect(actx.destination);
+      // 风声：一段“褐色噪音”循环播放，再滤掉高音，听起来像窗外远远的风
+      const len = actx.sampleRate * 3;
+      const buf = actx.createBuffer(1, len, actx.sampleRate);
+      const d = buf.getChannelData(0);
+      let last = 0;
+      for (let i = 0; i < len; i++) { last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3.5; }
+      const wind = actx.createBufferSource();
+      wind.buffer = buf; wind.loop = true;
+      const lp = actx.createBiquadFilter();
+      lp.type = 'lowpass'; lp.frequency.value = 450;
+      const windGain = actx.createGain();
+      windGain.gain.value = 0.35;
+      wind.connect(lp).connect(windGain).connect(master);
+      wind.start();
     }
+    // 一声“啾”：音高快速滑动的短音
+    function chirp(t, f0, f1, dur, vol, pan) {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(f0, t);
+      o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      let node = o.connect(g);
+      if (actx.createStereoPanner) { const p = actx.createStereoPanner(); p.pan.value = pan; node = node.connect(p); }
+      node.connect(master);
+      o.start(t); o.stop(t + dur + 0.02);
+    }
+    // 一只鸟叫一串（2~6 声），每次音高、快慢、左右位置都随机
+    function birdCall() {
+      const t0 = actx.currentTime + 0.05;
+      const n = 2 + Math.floor(Math.random() * 5);
+      const base = 2600 + Math.random() * 2200, gap = 0.09 + Math.random() * 0.08, pan = Math.random() * 1.6 - 0.8;
+      for (let k = 0; k < n; k++) {
+        const up = Math.random() < 0.5;
+        chirp(t0 + k * gap, base * (up ? 0.8 : 1.2), base * (up ? 1.25 : 0.75), 0.06 + Math.random() * 0.05, 0.05, pan);
+      }
+    }
+    function scheduleBird() {
+      birdTimer = setTimeout(() => { if (soundOn) { birdCall(); scheduleBird(); } }, 1500 + Math.random() * 4500);
+    }
+    function setSound(on) {
+      soundOn = on;
+      $('soundBtn').textContent = on ? '🔊 声音' : '🔇 声音';
+      if (on) {
+        if (!actx) setupAudio();
+        actx.resume();
+        master.gain.setTargetAtTime(0.7, actx.currentTime, 0.4);   // 慢慢变大声
+        clearTimeout(birdTimer); birdCall(); scheduleBird();
+      } else if (actx) {
+        master.gain.setTargetAtTime(0, actx.currentTime, 0.2);     // 慢慢变小声
+        clearTimeout(birdTimer);
+      }
+    }
+    $('soundBtn').onclick = () => setSound(!soundOn);
+    // 切到别的 App 或标签页时自动暂停，回来再继续
+    document.addEventListener('visibilitychange', () => {
+      if (!actx || !soundOn) return;
+      if (document.hidden) actx.suspend(); else actx.resume();
+    });
 
     // ========== 19. 手机虚拟摇杆 ==========
     const joy = $('joy'), knob = $('knob');
