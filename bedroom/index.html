@@ -3,11 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>阿尔勒的卧室</title>
+
+  <!-- ===== 标题和简介（搜索引擎、浏览器标签用） ===== -->
+  <title>走进梵高《阿尔勒的卧室》 · Walk into Van Gogh's Bedroom in Arles</title>
+  <meta name="description" content="在浏览器里走进梵高1888年的《阿尔勒的卧室》：3D 房间、可点击的物品介绍、三个版本对比。Walk into Van Gogh's 1888 Bedroom in Arles: a 3D room, clickable notes, and the three versions side by side." />
+
+  <!-- ===== 社交分享预览（Open Graph：微信/Facebook 等；Twitter Card：X） ===== -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://tiaz369.github.io/bedroom/" />
+  <meta property="og:title" content="走进梵高《阿尔勒的卧室》 · Walk into Van Gogh's Bedroom" />
+  <meta property="og:description" content="3D 房间、物品介绍、三个版本对比。A 3D room, clickable notes, and the three versions side by side." />
+  <meta property="og:image" content="https://tiaz369.github.io/bedroom/images/v1888.jpg" />
+  <meta property="og:image:alt" content="梵高《阿尔勒的卧室》1888 · Van Gogh, The Bedroom, 1888" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="走进梵高《阿尔勒的卧室》 · Walk into Van Gogh's Bedroom" />
+  <meta name="twitter:description" content="3D 房间、物品介绍、三个版本对比。A 3D room, clickable notes, and the three versions side by side." />
+  <meta name="twitter:image" content="https://tiaz369.github.io/bedroom/images/v1888.jpg" />
+
   <style>
     html, body { margin: 0; height: 100%; overflow: hidden; background: #2b3a55; font-family: sans-serif; }
     canvas { display: block; touch-action: none; }
     button { font-family: inherit; cursor: pointer; }
+    .hidden { display: none !important; }
+
+    /* 油画感：边缘稍暗 + 一层很淡的画布颗粒（纯 CSS，不影响流畅度） */
+    #canvasGrain {
+      position: fixed; inset: 0; pointer-events: none; z-index: 1;
+      background:
+        radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(30,25,40,.35) 100%),
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 .5  0 0 0 0 .45  0 0 0 0 .4  0 0 0 .5 0'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
+      opacity: .55; mix-blend-mode: multiply;
+    }
 
     /* ---------- 开场：全屏原画 ---------- */
     #intro {
@@ -21,39 +47,61 @@
     }
     #intro.zoom img { transform: scale(2.6); }
     #intro.fade { opacity: 0; pointer-events: none; }
-    #introMissing { color: #f3e9c6; padding: 16px; text-align: center; display: none; }
+    .missing { color: #f3e9c6; padding: 16px; text-align: center; font-size: 14px; }
     #enter {
       margin-top: 20px; padding: 12px 28px; font-size: 18px; border: none; border-radius: 30px;
       background: #e8b84a; color: #2b3a55; box-shadow: 0 4px 14px rgba(0,0,0,.35);
     }
     #enter span { display: block; font-size: 12px; opacity: .75; }
 
+    /* ---------- 通用按钮样式 ---------- */
+    .tool {
+      padding: 7px 11px; border: none; border-radius: 8px; font-size: 13px;
+      background: #e8b84a; color: #2b3a55; box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    }
+    .ui { position: fixed; z-index: 5; display: none; }
+    body.in-room .ui { display: flex; }
+
+    /* 左上角：工具栏 */
+    #tools { top: 12px; left: 12px; flex-direction: column; align-items: flex-start; gap: 8px; }
+    #wallSwitch { display: flex; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+    #wallSwitch button {
+      border: none; padding: 7px 9px; font-size: 12px; background: rgba(243,233,198,.85); color: #2b3a55;
+    }
+    #wallSwitch button.on { background: #2b3a55; color: #f3e9c6; }
+
+    /* 右上角：进度、声音、进入结尾 */
+    #status { top: 12px; right: 12px; flex-direction: column; align-items: flex-end; gap: 8px; }
+    #progress {
+      padding: 7px 11px; border-radius: 8px; font-size: 13px;
+      background: rgba(43, 58, 85, 0.8); color: #f3e9c6;
+    }
+    #endBtn { background: #d42a2a; color: #fff; font-size: 15px; padding: 9px 14px; animation: pop .5s ease; }
+    @keyframes pop { 0% { transform: scale(.4); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
     /* ---------- 提示条 ---------- */
     #hint {
-      position: fixed; top: 56px; left: 50%; transform: translateX(-50%);
-      background: rgba(43, 58, 85, 0.75); color: #f3e9c6; padding: 8px 14px;
+      position: fixed; top: 38%; left: 50%; transform: translateX(-50%); z-index: 4;
+      background: rgba(43, 58, 85, 0.8); color: #f3e9c6; padding: 8px 14px;
       border-radius: 8px; font-size: 14px; pointer-events: none; text-align: center;
-      max-width: calc(100% - 150px); box-sizing: border-box; transition: opacity 1s; opacity: 0;
+      width: max-content; max-width: calc(100% - 32px); box-sizing: border-box; transition: opacity 1s; opacity: 0;
     }
 
-    /* ---------- 左上角进度 ---------- */
-    #progress {
-      position: fixed; top: 12px; left: 12px; z-index: 5; padding: 8px 12px; border-radius: 8px;
-      background: rgba(43, 58, 85, 0.75); color: #f3e9c6; font-size: 14px; display: none;
+    /* ---------- 弹窗（对照原画、截图预览） ---------- */
+    .popup {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 8;
+      width: min(520px, calc(100% - 32px)); box-sizing: border-box;
+      background: #f3e9c6; border: 3px solid #c99a3a; border-radius: 8px; padding: 8px;
+      box-shadow: 0 6px 30px rgba(0,0,0,.5); display: none; color: #2b3a55; text-align: center;
     }
-
-    /* ---------- 右上角“对照原画” ---------- */
-    #compareBtn {
-      position: fixed; top: 12px; right: 12px; z-index: 5; padding: 8px 12px; border: none;
-      border-radius: 8px; background: #e8b84a; color: #2b3a55; font-size: 14px; display: none;
+    .popup img { width: 100%; display: block; }
+    .popup p { margin: 8px; font-size: 13px; }
+    .popup a { color: #2b3a55; font-weight: bold; }
+    .close {
+      position: absolute; top: 4px; right: 6px; border: none; background: rgba(243,233,198,.9);
+      font-size: 22px; color: #2b3a55; line-height: 1; border-radius: 50%; width: 30px; height: 30px; z-index: 1;
     }
-    #compare {
-      position: fixed; top: 56px; right: 12px; z-index: 6; width: min(360px, calc(100% - 24px));
-      background: #f3e9c6; border: 3px solid #c99a3a; border-radius: 8px; padding: 6px;
-      box-sizing: border-box; display: none; box-shadow: 0 6px 20px rgba(0,0,0,.4);
-    }
-    #compare img { width: 100%; display: block; }
-    #compare p { margin: 8px; color: #2b3a55; font-size: 13px; }
+    #flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 9; transition: opacity .4s; }
 
     /* ---------- 物品介绍卡片 ---------- */
     #card {
@@ -62,44 +110,110 @@
       background: #f3e9c6; color: #2b3a55; border: 3px solid #2b3a55; border-radius: 10px;
       padding: 14px 16px; display: none; box-shadow: 0 6px 20px rgba(0,0,0,.4);
     }
+    body.touch #card { bottom: 150px; }   /* 手机上让开左下角摇杆 */
     #card h3 { margin: 0 28px 2px 0; font-size: 18px; }
     #card .en-title { margin: 0 0 10px; font-size: 14px; opacity: .7; font-style: italic; }
     #card p { margin: 6px 0; font-size: 14px; line-height: 1.55; }
     #card .en { opacity: .8; }
-    .close {
-      position: absolute; top: 6px; right: 8px; border: none; background: none;
-      font-size: 22px; color: #2b3a55; line-height: 1;
-    }
 
     /* ---------- 手机虚拟摇杆 ---------- */
     #joy {
-      position: fixed; left: 24px; bottom: 24px; width: 110px; height: 110px;
+      position: fixed; left: 24px; bottom: 24px; width: 110px; height: 110px; z-index: 5;
       border-radius: 50%; background: rgba(243, 233, 198, 0.25);
       border: 2px solid rgba(243, 233, 198, 0.6); display: none; touch-action: none;
     }
+    body.touch.in-room #joy { display: block; }
     #knob {
       position: absolute; left: 35px; top: 35px; width: 40px; height: 40px;
       border-radius: 50%; background: rgba(243, 233, 198, 0.85);
     }
+
+    /* ---------- 结尾：三个版本展厅 ---------- */
+    #gallery {
+      position: fixed; inset: 0; z-index: 30; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      background: #1d2840; color: #f3e9c6; display: none; opacity: 0; transition: opacity .8s;
+    }
+    #gallery.show { opacity: 1; }
+    .g-inner { max-width: 1100px; margin: 0 auto; padding: 40px 16px 60px; box-sizing: border-box; }
+    #gallery h2 { text-align: center; font-weight: normal; font-size: 26px; margin: 0 0 18px; }
+    #gallery h2 small { display: block; font-size: 15px; opacity: .7; margin-top: 4px; }
+    .story { max-width: 720px; margin: 0 auto 32px; line-height: 1.8; font-size: 15px; }
+    .story .en { opacity: .75; }
+    .versions { display: flex; gap: 18px; }
+    .versions figure { flex: 1; margin: 0; background: #f3e9c6; color: #2b3a55; padding: 8px; border-radius: 6px; }
+    .versions img, .ph { width: 100%; aspect-ratio: 5 / 4; object-fit: cover; display: block; }
+    .ph { background: #3a4a6a; color: #f3e9c6; display: flex; align-items: center; justify-content: center; font-size: 13px; text-align: center; }
+    .versions figcaption { font-size: 13px; line-height: 1.5; padding: 8px 2px 2px; }
+    .section-title { text-align: center; margin: 44px 0 12px; font-size: 20px; }
+    .section-title small { display: block; font-size: 13px; opacity: .7; }
+
+    /* 对比滑块 */
+    .cmp-pick { display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; font-size: 14px; }
+    .cmp-pick select { font-size: 14px; padding: 4px; border-radius: 6px; }
+    #cmp {
+      position: relative; width: min(820px, 100%); aspect-ratio: 5 / 4; margin: 0 auto;
+      overflow: hidden; border-radius: 6px; touch-action: pan-y; cursor: ew-resize; user-select: none; background: #3a4a6a;
+    }
+    #cmp img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none; -webkit-user-drag: none; }
+    #cmpLine { position: absolute; top: 0; bottom: 0; width: 3px; background: #f3e9c6; transform: translateX(-50%); pointer-events: none; }
+    #cmpLine::after {
+      content: '◀ ▶'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: #f3e9c6; color: #2b3a55; font-size: 12px; padding: 6px 8px; border-radius: 14px; white-space: nowrap;
+    }
+    .cmp-tag { position: absolute; top: 8px; background: rgba(29,40,64,.8); padding: 3px 8px; border-radius: 4px; font-size: 12px; pointer-events: none; }
+    .links { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .links a {
+      color: #2b3a55; background: #e8b84a; padding: 10px 14px; border-radius: 8px; text-decoration: none; font-size: 14px;
+    }
+    #backRoom { display: block; margin: 40px auto 0; }
+
+    @media (max-width: 700px) {
+      .versions { flex-direction: column; }   /* 手机上改成上下排列 */
+    }
   </style>
 </head>
 <body>
+  <div id="canvasGrain"></div>
+
   <!-- 开场原画 -->
   <div id="intro">
-    <img id="introImg" src="painting.jpg" alt="梵高《阿尔勒的卧室》" />
-    <div id="introMissing">（找不到 painting.jpg，请把原画图片放在和 index.html 同一个文件夹）</div>
+    <img id="introImg" src="images/v1888.jpg" alt="梵高《阿尔勒的卧室》1888" />
+    <div id="introMissing" class="missing hidden">（找不到 images/v1888.jpg）</div>
     <button id="enter">走进画里<span>Step into the painting</span></button>
   </div>
 
   <div id="hint">电脑：WASD 走动，拖动鼠标转视角<br>手机：左下摇杆走动，拖动屏幕转视角<br>点一下物品看介绍</div>
 
-  <div id="progress">已发现 0/6</div>
-  <button id="compareBtn">对照原画</button>
-  <div id="compare">
-    <button class="close" id="compareClose" aria-label="关闭">×</button>
-    <img src="painting.jpg" alt="梵高《阿尔勒的卧室》" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'" />
-    <p style="display:none">（找不到 painting.jpg）</p>
+  <!-- 左上角工具栏 -->
+  <div id="tools" class="ui">
+    <button class="tool" id="compareBtn">对照原画</button>
+    <button class="tool" id="shotBtn">📷 拍一张</button>
+    <div id="wallSwitch">
+      <button data-wall="blue" class="on">现在的蓝墙</button>
+      <button data-wall="violet">梵高画时的紫墙</button>
+    </div>
   </div>
+
+  <!-- 右上角：进度 / 声音 / 进入结尾 -->
+  <div id="status" class="ui">
+    <div id="progress">已发现 0/6</div>
+    <button class="tool hidden" id="soundBtn">🔇 声音</button>
+    <button class="tool hidden" id="endBtn">进入结尾 →</button>
+  </div>
+
+  <!-- 对照原画小窗 -->
+  <div class="popup" id="compare">
+    <button class="close" data-close="compare" aria-label="关闭">×</button>
+    <img src="images/v1888.jpg" alt="梵高《阿尔勒的卧室》1888" />
+  </div>
+
+  <!-- 截图预览 -->
+  <div class="popup" id="shot">
+    <button class="close" data-close="shot" aria-label="关闭">×</button>
+    <img id="shotImg" alt="截图" />
+    <p><a id="shotSave" download="arles-bedroom.png">保存图片 · Save</a><br>手机上也可以长按图片保存 · On phones, long-press to save</p>
+  </div>
+  <div id="flash"></div>
 
   <div id="card">
     <button class="close" id="cardClose" aria-label="关闭">×</button>
@@ -110,6 +224,42 @@
   </div>
 
   <div id="joy"><div id="knob"></div></div>
+
+  <!-- 结尾：三个版本展厅 -->
+  <div id="gallery">
+    <div class="g-inner">
+      <h2>三个版本<small>The Three Versions</small></h2>
+      <div class="story">
+        <p>1888年，梵高在阿尔勒的黄房子里画下自己的卧室，当时他在等高更来同住。后来他住院期间，这幅画受潮损坏。1889年，他在圣雷米重画了两次：一幅同样大小，一幅较小，送给母亲和妹妹。</p>
+        <p class="en">In 1888, Van Gogh painted his bedroom in the Yellow House in Arles, while waiting for Gauguin. The painting was later damaged by damp while he was in hospital. In 1889, he painted it twice more: one full-size, and a smaller one for his mother and sister.</p>
+      </div>
+
+      <div class="versions" id="versions"></div>
+
+      <div class="section-title">找不同<small>Compare two versions — drag left and right</small></div>
+      <div class="cmp-pick">
+        <select id="cmpA" aria-label="左边的版本"></select>
+        <span>↔</span>
+        <select id="cmpB" aria-label="右边的版本"></select>
+      </div>
+      <div id="cmp">
+        <img id="cmpImgA" alt="" onerror="this.style.visibility='hidden'" onload="this.style.visibility='visible'" />
+        <img id="cmpImgB" alt="" onerror="this.style.visibility='hidden'" onload="this.style.visibility='visible'" />
+        <div id="cmpLine"></div>
+        <span class="cmp-tag" id="cmpTagA" style="left:8px"></span>
+        <span class="cmp-tag" id="cmpTagB" style="right:8px"></span>
+      </div>
+
+      <div class="section-title">去看真迹<small>See the real paintings</small></div>
+      <div class="links">
+        <a href="https://www.vangoghmuseum.nl" target="_blank" rel="noopener">梵高博物馆 · Van Gogh Museum</a>
+        <a href="https://www.artic.edu" target="_blank" rel="noopener">芝加哥艺术博物馆 · Art Institute of Chicago</a>
+        <a href="https://www.musee-orsay.fr" target="_blank" rel="noopener">奥赛博物馆 · Musée d'Orsay</a>
+      </div>
+
+      <button class="tool" id="backRoom">← 回到房间 · Back to the room</button>
+    </div>
+  </div>
 
   <!-- 告诉浏览器去哪里下载 Three.js -->
   <script type="importmap">
@@ -157,10 +307,21 @@
       }
     };
 
+    // ★ 三个版本（展厅用）★
+    const VERSIONS = [
+      { file: 'images/v1888.jpg',         short: '1888 · 阿姆斯特丹', caption: '1888年10月 · 阿姆斯特丹梵高博物馆 · Van Gogh Museum, Amsterdam' },
+      { file: 'images/v1889-chicago.jpg', short: '1889 · 芝加哥',     caption: '1889年9月 · 芝加哥艺术博物馆 · Art Institute of Chicago' },
+      { file: 'images/v1889-orsay.jpg',   short: '1889 · 巴黎',       caption: "1889年 · 巴黎奥赛博物馆 · Musée d'Orsay, Paris" }
+    ];
+
+    // ★ 环境音：找到确认是 CC0 授权的声音文件后，把文件名填在这里（例如 'sound/birds.mp3'），
+    //   声音按钮就会自动出现。现在留空 = 按钮隐藏。
+    const SOUND_URL = '';
+
     // ========== 1. 颜色（来自梵高的信） ==========
     const C = {
-      wall:    '#b4b5dc', // 淡紫色墙
-      floor:   '#b5533c', // 红色地砖
+      wallBlue:   '#9fbde9', // 现在看到的蓝墙（颜料褪色后）
+      wallViolet: '#bda9dd', // 梵高画时的淡紫色墙
       wood:    '#e8b84a', // 黄油黄（床、椅子）
       sheet:   '#e4efa8', // 很淡的柠檬绿（床单、枕头）
       quilt:   '#d42a2a', // 猩红色被子
@@ -169,13 +330,17 @@
       basin:   '#3d6fc4', // 蓝色脸盆
       door:    '#a98cc9', // 丁香紫门
       line:    '#2b3a55', // 深蓝描边（油画的轮廓线）
-      ceiling: '#e2dff0',
+      ceiling: '#dcd8ea',
       seat:    '#c9a24a'  // 草编椅面
     };
 
     // ========== 2. 基本场景 ==========
+    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (isTouch) document.body.classList.add('touch');
+
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // 手机上把清晰度稍微降一点，保证流畅
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isTouch ? 1.5 : 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
@@ -195,50 +360,95 @@
     // 后墙的倾斜角度（贴在后墙上的东西都要转这个角度）
     const BACK_ROT = -Math.atan2(BACK_R - BACK_L, W);
 
-    // ========== 3. 扁平的“色块”材质 ==========
-    // 卡通材质 + 3 档明暗，让光影变成一块一块的，像油画笔触
-    const steps = new Uint8Array([90, 170, 255]);
-    const gradient = new THREE.DataTexture(steps, 3, 1, THREE.RedFormat);
-    gradient.minFilter = gradient.magFilter = THREE.NearestFilter;
-    gradient.needsUpdate = true;
-
-    function paint(color, map) {
-      return new THREE.MeshToonMaterial({ color, gradientMap: gradient, map: map || null });
-    }
-
-    // 用画布随手“画”一张有笔触的纹理
-    function brushTexture(base, strokeColors, count) {
+    // ========== 3. 油画质感：程序生成的笔触纹理 ==========
+    // 纹理本身是“浅灰白 + 笔触”，再乘上物体的颜色，所以一张纹理可以给很多颜色的物体共用（省内存、手机流畅）
+    const TEX_SIZE = 256;
+    function strokeCanvas(draw) {
       const cv = document.createElement('canvas');
-      cv.width = cv.height = 256;
+      cv.width = cv.height = TEX_SIZE;
       const g = cv.getContext('2d');
-      g.fillStyle = base; g.fillRect(0, 0, 256, 256);
-      for (let i = 0; i < count; i++) {
-        g.strokeStyle = strokeColors[i % strokeColors.length];
-        g.globalAlpha = 0.25 + Math.random() * 0.3;
-        g.lineWidth = 3 + Math.random() * 5;
-        g.lineCap = 'round';
-        const x = Math.random() * 256, y = Math.random() * 256, a = Math.random() * 0.6 - 0.3;
-        g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * 30, y + Math.sin(a) * 30 + 20); g.stroke();
-      }
+      g.fillStyle = '#f4f4f4'; g.fillRect(0, 0, TEX_SIZE, TEX_SIZE);
+      g.lineCap = 'round';
+      draw(g, TEX_SIZE);
       const t = new THREE.CanvasTexture(cv);
       t.wrapS = t.wrapT = THREE.RepeatWrapping;
       t.colorSpace = THREE.SRGBColorSpace;
+      t.anisotropy = 4;
       return t;
     }
+    // 一笔：位置、方向、长度、粗细、灰度
+    function dab(g, x, y, angle, len, width, shade, alpha) {
+      g.strokeStyle = `rgb(${shade[0]},${shade[1]},${shade[2]})`;
+      g.globalAlpha = alpha;
+      g.lineWidth = width;
+      // 每笔都画三遍、稍微错开，看起来像一刷子里的几根毛
+      for (let k = -1; k <= 1; k++) {
+        const ox = Math.sin(angle) * k * width * 0.35, oy = -Math.cos(angle) * k * width * 0.35;
+        g.beginPath();
+        g.moveTo(x + ox, y + oy);
+        g.quadraticCurveTo(
+          x + ox + Math.cos(angle) * len * 0.5 + (Math.random() - 0.5) * 6,
+          y + oy + Math.sin(angle) * len * 0.5 + (Math.random() - 0.5) * 6,
+          x + ox + Math.cos(angle) * len, y + oy + Math.sin(angle) * len);
+        g.stroke();
+      }
+    }
+    // 画满一张纹理（同一笔在边缘重复画，保证无缝平铺）
+    function fill(g, s, count, fn) {
+      for (let i = 0; i < count; i++) {
+        const p = fn();
+        for (const ox of [-s, 0, s]) for (const oy of [-s, 0, s]) {
+          if (Math.abs(p.x + ox - s / 2) > s * 0.75 || Math.abs(p.y + oy - s / 2) > s * 0.75) continue;
+          dab(g, p.x + ox, p.y + oy, p.a, p.len, p.w, p.shade, p.alpha);
+        }
+      }
+    }
+    const rnd = (a, b) => a + Math.random() * (b - a);
+    // 笔触颜色：大多是略深或略亮的灰，偶尔带一点冷/暖色，像混在一起的颜料
+    function shade(dark, light) {
+      const r = Math.random();
+      if (r < 0.45) { const v = rnd(dark, 240); return [v, v, v]; }
+      if (r < 0.8)  return [255, 255, 255];
+      if (r < 0.9)  return [rnd(light, 250), rnd(light, 250), 255];   // 冷一点
+      return [255, rnd(light, 250), rnd(light - 10, 240)];            // 暖一点
+    }
 
-    // 红色地砖纹理：一格一格、颜色略有不同，缝是偏绿的线
+    const TEX = {
+      // 墙：短而斜的笔触，方向有点乱，像梵高的墙面
+      wall: strokeCanvas((g, s) => fill(g, s, 260, () => ({
+        x: rnd(0, s), y: rnd(0, s), a: rnd(1.0, 1.9), len: rnd(18, 34), w: rnd(4, 8),
+        shade: shade(215, 225), alpha: rnd(0.2, 0.4)
+      }))),
+      // 木头：沿着长边的长笔触
+      wood: strokeCanvas((g, s) => fill(g, s, 140, () => ({
+        x: rnd(0, s), y: rnd(0, s), a: rnd(-0.08, 0.08), len: rnd(50, 110), w: rnd(3, 7),
+        shade: shade(200, 220), alpha: rnd(0.3, 0.5)
+      }))),
+      // 布料：短促、交叉的笔触
+      cloth: strokeCanvas((g, s) => fill(g, s, 220, () => ({
+        x: rnd(0, s), y: rnd(0, s), a: Math.random() < 0.5 ? rnd(0.5, 0.9) : rnd(2.2, 2.6), len: rnd(12, 24), w: rnd(4, 7),
+        shade: shade(210, 225), alpha: rnd(0.25, 0.45)
+      })))
+    };
+
+    // 红色地砖：一格一格、颜色略有不同，缝是偏绿的线，每块砖里再加几笔
     function tileTexture() {
       const cv = document.createElement('canvas');
-      cv.width = cv.height = 256;
+      cv.width = cv.height = TEX_SIZE;
       const g = cv.getContext('2d');
-      g.fillStyle = '#6f7d4f'; g.fillRect(0, 0, 256, 256); // 砖缝颜色
+      g.fillStyle = '#6f7d4f'; g.fillRect(0, 0, TEX_SIZE, TEX_SIZE); // 砖缝颜色
       const reds = ['#b5533c', '#c0603f', '#a9493a', '#c86b45', '#b0573f'];
-      const n = 4, s = 256 / n;
+      const n = 4, s = TEX_SIZE / n;
+      g.lineCap = 'round';
       for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
         g.fillStyle = reds[Math.floor(Math.random() * reds.length)];
         g.fillRect(i * s + 3, j * s + 3, s - 6, s - 6);
-        g.strokeStyle = '#d98055'; g.globalAlpha = 0.4; g.lineWidth = 4;
-        g.beginPath(); g.moveTo(i * s + 10, j * s + 20); g.lineTo(i * s + s - 12, j * s + 30); g.stroke();
+        for (let k = 0; k < 6; k++) {
+          g.strokeStyle = ['#d98055', '#9c3f30', '#c96a48'][k % 3];
+          g.globalAlpha = rnd(0.3, 0.55); g.lineWidth = rnd(3, 6);
+          const x = i * s + rnd(8, s - 30), y = j * s + rnd(8, s - 10);
+          g.beginPath(); g.moveTo(x, y); g.lineTo(x + rnd(14, 24), y + rnd(-5, 5)); g.stroke();
+        }
         g.globalAlpha = 1;
       }
       const t = new THREE.CanvasTexture(cv);
@@ -246,6 +456,23 @@
       t.repeat.set(0.5, 0.5);  // 每块砖约 0.5 米
       t.colorSpace = THREE.SRGBColorSpace;
       return t;
+    }
+
+    // 卡通材质 + 3 档明暗，让光影变成一块一块的色块
+    const steps = new Uint8Array([90, 170, 255]);
+    const gradient = new THREE.DataTexture(steps, 3, 1, THREE.RedFormat);
+    gradient.minFilter = gradient.magFilter = THREE.NearestFilter;
+    gradient.needsUpdate = true;
+
+    // 同样的颜色+纹理只做一次材质，大家共用
+    const matCache = {};
+    function paint(color, tex = 'wood') {
+      const key = color + tex;
+      if (!matCache[key]) {
+        const map = typeof tex === 'string' ? TEX[tex] : tex;
+        matCache[key] = new THREE.MeshToonMaterial({ color, gradientMap: gradient, map: map || null });
+      }
+      return matCache[key];
     }
 
     const outlineMat = new THREE.LineBasicMaterial({ color: C.line });
@@ -256,9 +483,9 @@
       return mesh;
     }
 
-    // 造一个方块：宽、高、深、颜色/材质、位置
-    function box(w, h, d, mat, x, y, z, parent = scene) {
-      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), typeof mat === 'string' ? paint(mat) : mat);
+    // 造一个方块：宽、高、深、颜色、位置、（父物体）、（纹理：wood / cloth / wall）
+    function box(w, h, d, color, x, y, z, parent = scene, tex = 'wood') {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), paint(color, tex));
       m.position.set(x, y, z);
       parent.add(outline(m));
       return m;
@@ -301,18 +528,23 @@
     floor.userData.info = 'floor';   // 地板可点击
     scene.add(floor);
 
-    const ceil = new THREE.Mesh(new THREE.ShapeGeometry(plan), new THREE.MeshBasicMaterial({ color: C.ceiling }));
+    const ceilGeo = new THREE.ShapeGeometry(plan);
+    const ceil = new THREE.Mesh(ceilGeo, new THREE.MeshBasicMaterial({ color: C.ceiling, map: TEX.wall, side: THREE.DoubleSide }));
     ceil.rotation.x = -Math.PI / 2;
     ceil.position.y = H;
-    ceil.material.side = THREE.DoubleSide;
     scene.add(ceil);
+
+    // 四面墙共用一个材质，这样“蓝墙/紫墙”开关只要改一个颜色
+    const wallMat = new THREE.MeshToonMaterial({ color: C.wallBlue, gradientMap: gradient, map: TEX.wall });
 
     // 墙：从 (x1,z1) 到 (x2,z2) 的一面竖墙，可被点击（显示“墙”的卡片）
     function wall(x1, z1, x2, z2) {
       const len = Math.hypot(x2 - x1, z2 - z1);
-      const tex = brushTexture(C.wall, ['#a3a6d6', '#c6c3e6', '#9fa9d0'], 220);
-      tex.repeat.set(len / 2, 1);
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(len, H), paint('#ffffff', tex));
+      const geo = new THREE.PlaneGeometry(len, H);
+      // 让笔触大小在每面墙上都一样（大约每 1 米重复一次）
+      const uv = geo.attributes.uv;
+      for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * len, uv.getY(i) * H);
+      const m = new THREE.Mesh(geo, wallMat);
       m.position.set((x1 + x2) / 2, H / 2, (z1 + z2) / 2);
       m.rotation.y = -Math.atan2(z2 - z1, x2 - x1);   // 让墙面朝向房间里面
       m.userData.info = 'wall';
@@ -339,7 +571,7 @@
 
     // ========== 5. 窗户（后墙，绿色） ==========
     const win = onBackWall(-0.6, 1.75);
-    box(1.0, 1.3, 0.02, '#bfe0c8', 0, 0, -0.01, win);          // 玻璃（淡淡的外面光）
+    box(1.0, 1.3, 0.02, '#bfe0c8', 0, 0, -0.01, win, 'cloth');  // 玻璃（淡淡的外面光）
     box(1.1, 0.08, 0.06, C.window, 0, 0.65, 0, win);            // 上框
     box(1.1, 0.08, 0.06, C.window, 0, -0.65, 0, win);           // 下框
     box(0.08, 1.38, 0.06, C.window, -0.52, 0, 0, win);          // 左框
@@ -370,12 +602,12 @@
     box(BW, 0.55, 0.06, C.wood, 0, 0.55, BL / 2, bed);          // 床尾板
     box(0.05, 0.25, BL, C.wood, -BW / 2, 0.35, 0, bed);         // 两侧床沿
     box(0.05, 0.25, BL, C.wood, BW / 2, 0.35, 0, bed);
-    box(BW - 0.08, 0.18, BL - 0.1, C.sheet, 0, 0.55, 0, bed);   // 床垫 + 床单
-    box(0.55, 0.14, 0.35, C.sheet, -0.3, 0.72, -BL / 2 + 0.3, bed); // 两个枕头
-    box(0.55, 0.14, 0.35, C.sheet, 0.3, 0.72, -BL / 2 + 0.3, bed);
-    box(BW - 0.02, 0.12, 1.3, C.quilt, 0, 0.69, 0.3, bed);      // 猩红被子
-    box(0.04, 0.35, 1.3, C.quilt, -BW / 2 + 0.01, 0.52, 0.3, bed); // 被子两边垂下来
-    box(0.04, 0.35, 1.3, C.quilt, BW / 2 - 0.01, 0.52, 0.3, bed);
+    box(BW - 0.08, 0.18, BL - 0.1, C.sheet, 0, 0.55, 0, bed, 'cloth');   // 床垫 + 床单
+    box(0.55, 0.14, 0.35, C.sheet, -0.3, 0.72, -BL / 2 + 0.3, bed, 'cloth'); // 两个枕头
+    box(0.55, 0.14, 0.35, C.sheet, 0.3, 0.72, -BL / 2 + 0.3, bed, 'cloth');
+    box(BW - 0.02, 0.12, 1.3, C.quilt, 0, 0.69, 0.3, bed, 'cloth');      // 猩红被子
+    box(0.04, 0.35, 1.3, C.quilt, -BW / 2 + 0.01, 0.52, 0.3, bed, 'cloth'); // 被子两边垂下来
+    box(0.04, 0.35, 1.3, C.quilt, BW / 2 - 0.01, 0.52, 0.3, bed, 'cloth');
 
     // ========== 8. 两把椅子（黄油黄，草编椅面）—— 可点击 ==========
     function chair(x, z, rotY) {
@@ -383,7 +615,7 @@
       const s = 0.42;
       for (const [lx, lz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]])
         cyl(0.025, 0.025, 0.45, C.wood, lx * s / 2, 0.225, lz * s / 2, g);      // 四条腿
-      box(s + 0.04, 0.05, s + 0.04, C.seat, 0, 0.47, 0, g);                       // 椅面
+      box(s + 0.04, 0.05, s + 0.04, C.seat, 0, 0.47, 0, g, 'cloth');              // 椅面
       for (const lx of [-1, 1]) cyl(0.025, 0.025, 0.5, C.wood, lx * s / 2, 0.72, -s / 2, g); // 靠背柱
       for (const y of [0.65, 0.8, 0.94]) box(s, 0.04, 0.03, C.wood, 0, y, -s / 2, g);       // 靠背横档
       for (const lz of [-1, 1]) box(s, 0.025, 0.025, C.wood, 0, 0.15, lz * s / 2, g);       // 腿间横档
@@ -406,14 +638,14 @@
 
     // ========== 10. 小镜子（左墙，桌子上方） ==========
     box(0.04, 0.5, 0.4, '#8a5a2b', L + 0.03, 1.45, TBL_Z);        // 镜框
-    box(0.02, 0.42, 0.32, '#cfe0ea', L + 0.055, 1.45, TBL_Z);     // 镜面
+    box(0.02, 0.42, 0.32, '#cfe0ea', L + 0.055, 1.45, TBL_Z, scene, 'cloth'); // 镜面
     box(0.02, 0.05, 0.6, '#f2ecd8', L + 0.04, 1.12, TBL_Z + 0.75); // 挂毛巾的横杆
-    box(0.02, 0.45, 0.25, '#e9efd0', L + 0.05, 0.9, TBL_Z + 0.75); // 毛巾
+    box(0.02, 0.45, 0.25, '#e9efd0', L + 0.05, 0.9, TBL_Z + 0.75, scene, 'cloth'); // 毛巾
 
     // ========== 11. 墙上的画框 ==========
     function frame(g, w, h, picColor) {
       box(w, h, 0.04, '#c99a3a', 0, 0, 0, g);                    // 金黄色画框
-      box(w - 0.08, h - 0.08, 0.02, picColor, 0, 0, 0.025, g);   // 画面
+      box(w - 0.08, h - 0.08, 0.02, picColor, 0, 0, 0.025, g, 'cloth'); // 画面
     }
     // 床上方右墙：两幅肖像 —— 可点击
     const RW = -Math.PI / 2, LW = Math.PI / 2;  // 贴右墙 / 左墙时的朝向
@@ -446,10 +678,11 @@
     // ========== 13. 第一人称：走动和转视角 ==========
     const START_Z = 1.9;
     const player = { x: 0, z: 2.35, yaw: 0, pitch: -0.08, eye: 1.55, r: 0.25 };
-    let walking = false;   // 开场动画结束后才允许走动
+    let walking = false;   // 开场动画结束后、且不在展厅时才允许走动
     const keys = {};
     window.addEventListener('keydown', e => { keys[e.code] = true; });
     window.addEventListener('keyup', e => { keys[e.code] = false; });
+    window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 
     // 不能穿过的东西（矩形区域：x 最小, x 最大, z 最小, z 最大）
     const blocks = [
@@ -483,13 +716,14 @@
       if (e.pointerId !== dragId) return;
       dragId = null;
       // 几乎没移动 = 是“点一下”，不是拖动
-      if (walking && Math.hypot(e.clientX - downX, e.clientY - downY) < 8) pick(e.clientX, e.clientY);
+      if (walking && Math.hypot(e.clientX - downX, e.clientY - downY) < 8) { pick(e.clientX, e.clientY); hideHint(); }
     });
     window.addEventListener('pointercancel', e => { if (e.pointerId === dragId) dragId = null; });
 
-    // ========== 14. 点击物品 → 弹出双语卡片 ==========
+    // ========== 14. 点击物品 → 弹出双语卡片 + 发现进度 ==========
+    const $ = id => document.getElementById(id);
     const raycaster = new THREE.Raycaster();
-    const card = document.getElementById('card');
+    const card = $('card');
     function pick(cx, cy) {
       const p = new THREE.Vector2(cx / window.innerWidth * 2 - 1, -(cy / window.innerHeight) * 2 + 1);
       raycaster.setFromCamera(p, camera);
@@ -498,33 +732,79 @@
       while (obj && !obj.userData.info) obj = obj.parent;   // 往上找到所属的物品
       if (obj) showCard(obj.userData.info); else card.style.display = 'none';
     }
+
     const found = new Set();
-    const progress = document.getElementById('progress');
+    const TOTAL = Object.keys(INFO).length;
     function showCard(key) {
       const t = INFO[key];
-      document.getElementById('cardTitle').textContent = t.title;
-      document.getElementById('cardTitleEn').textContent = t.titleEn;
-      document.getElementById('cardZh').textContent = t.zh;
-      document.getElementById('cardEn').textContent = t.en;
+      $('cardTitle').textContent = t.title;
+      $('cardTitleEn').textContent = t.titleEn;
+      $('cardZh').textContent = t.zh;
+      $('cardEn').textContent = t.en;
       card.style.display = 'block';
-      // 记录看过哪些，更新进度 x/6
+      // 记录看过哪些，更新进度 x/6；全部看过就出现“进入结尾”
       found.add(key);
-      const total = Object.keys(INFO).length;
-      progress.textContent = found.size === total ? `全部发现 ${total}/${total} 🎉` : `已发现 ${found.size}/${total}`;
+      $('progress').textContent = `已发现 ${found.size}/${TOTAL}`;
+      if (found.size === TOTAL) $('endBtn').classList.remove('hidden');
     }
-    document.getElementById('cardClose').onclick = () => { card.style.display = 'none'; };
+    $('cardClose').onclick = () => { card.style.display = 'none'; };
 
-    // ========== 15. 右上角“对照原画” ==========
-    const compare = document.getElementById('compare');
-    const compareBtn = document.getElementById('compareBtn');
-    compareBtn.onclick = () => { compare.style.display = compare.style.display === 'block' ? 'none' : 'block'; };
-    document.getElementById('compareClose').onclick = () => { compare.style.display = 'none'; };
+    // ========== 15. 弹窗：对照原画 ==========
+    const popups = { compare: $('compare'), shot: $('shot') };
+    function togglePopup(name, show) {
+      for (const k in popups) if (k !== name) popups[k].style.display = 'none';
+      const el = popups[name];
+      el.style.display = (show ?? el.style.display !== 'block') ? 'block' : 'none';
+    }
+    $('compareBtn').onclick = () => togglePopup('compare');
+    document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => togglePopup(b.dataset.close, false));
 
-    // ========== 16. 手机虚拟摇杆 ==========
-    const joy = document.getElementById('joy'), knob = document.getElementById('knob');
+    // 图片找不到时，显示一行提示而不是破图标
+    function onMissing(img, text, cls = 'missing') {
+      img.addEventListener('error', () => {
+        const d = document.createElement('div');
+        d.className = cls;
+        d.textContent = text;
+        img.replaceWith(d);
+      }, { once: true });
+    }
+    onMissing($('compare').querySelector('img'), '（找不到 images/v1888.jpg）');
+
+    // ========== 16. 褪色开关：现在的蓝墙 / 梵高画时的紫墙 ==========
+    const wallTarget = new THREE.Color(C.wallBlue);
+    document.querySelectorAll('#wallSwitch button').forEach(b => b.onclick = () => {
+      document.querySelectorAll('#wallSwitch button').forEach(x => x.classList.toggle('on', x === b));
+      wallTarget.set(b.dataset.wall === 'blue' ? C.wallBlue : C.wallViolet);
+    });
+
+    // ========== 17. 拍一张：把当前画面存成图片 ==========
+    $('shotBtn').onclick = () => {
+      renderer.render(scene, camera);                       // 先画一帧，马上读出来
+      const url = renderer.domElement.toDataURL('image/png');
+      $('shotImg').src = url;
+      $('shotSave').href = url;
+      const f = $('flash');
+      f.style.transition = 'none'; f.style.opacity = 0.8;
+      requestAnimationFrame(() => { f.style.transition = 'opacity .4s'; f.style.opacity = 0; });
+      togglePopup('shot', true);
+    };
+
+    // ========== 18. 声音（默认静音；没有 CC0 声音文件时按钮隐藏） ==========
+    if (SOUND_URL) {
+      const audio = new Audio(SOUND_URL);
+      audio.loop = true; audio.volume = 0.5;
+      const btn = $('soundBtn');
+      btn.classList.remove('hidden');
+      btn.onclick = () => {
+        if (audio.paused) { audio.play(); btn.textContent = '🔊 声音'; }
+        else { audio.pause(); btn.textContent = '🔇 声音'; }
+      };
+    }
+
+    // ========== 19. 手机虚拟摇杆 ==========
+    const joy = $('joy'), knob = $('knob');
     const joyMove = { x: 0, y: 0 };
     let joyId = null;
-    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     function setKnob(e) {
       const rect = joy.getBoundingClientRect();
       let dx = e.clientX - (rect.left + rect.width / 2);
@@ -540,21 +820,20 @@
     joy.addEventListener('pointerup', joyEnd);
     joy.addEventListener('pointercancel', joyEnd);
 
-    const hint = document.getElementById('hint');
+    const hint = $('hint');
     let hintHidden = false;
     function hideHint() { if (!hintHidden) { hintHidden = true; setTimeout(() => hint.style.opacity = 0, 2500); } }
 
-    // ========== 17. 开场：原画 → 镜头推进 → 3D 房间 ==========
-    const intro = document.getElementById('intro');
-    const introImg = document.getElementById('introImg');
-    introImg.onerror = () => { introImg.style.display = 'none'; document.getElementById('introMissing').style.display = 'block'; };
+    // ========== 20. 开场：原画 → 镜头推进 → 3D 房间 ==========
+    const intro = $('intro');
+    $('introImg').onerror = () => { $('introImg').classList.add('hidden'); $('introMissing').classList.remove('hidden'); };
 
     const FLY_TIME = 2.2;   // 推进动画的秒数
     let flyT = -1;          // -1 = 还没开始
     camera.fov = 40;        // 开场时镜头“拉远”，像看一幅画
     camera.updateProjectionMatrix();
 
-    document.getElementById('enter').onclick = () => {
+    $('enter').onclick = () => {
       intro.classList.add('zoom');                           // 原画放大
       setTimeout(() => intro.classList.add('fade'), 600);    // 然后淡出，露出 3D 房间
       flyT = 0;                                              // 镜头开始往前推
@@ -563,22 +842,76 @@
     function finishIntro() {
       walking = true;
       intro.style.display = 'none';
-      compareBtn.style.display = 'block';
-      progress.style.display = 'block';
-      if (isTouch) joy.style.display = 'block';
+      document.body.classList.add('in-room');
       hint.style.opacity = 1;
     }
 
     // 缓动：开始慢、中间快、结束慢
     const ease = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 
-    // ========== 18. 每一帧：移动 + 画画面 ==========
+    // ========== 21. 结尾：三个版本展厅 ==========
+    const gallery = $('gallery');
+    // 三幅画并排
+    for (const v of VERSIONS) {
+      const fig = document.createElement('figure');
+      const img = document.createElement('img');
+      img.src = v.file; img.alt = v.caption; img.loading = 'lazy';
+      onMissing(img, `（找不到 ${v.file}）`, 'ph');
+      const cap = document.createElement('figcaption');
+      cap.textContent = v.caption;
+      fig.append(img, cap);
+      $('versions').append(fig);
+    }
+
+    // 对比滑块：选两个版本叠在一起，左右拖动
+    const cmp = $('cmp'), imgA = $('cmpImgA'), imgB = $('cmpImgB'), line = $('cmpLine');
+    VERSIONS.forEach((v, i) => {
+      $('cmpA').add(new Option(v.short, i));
+      $('cmpB').add(new Option(v.short, i));
+    });
+    $('cmpA').value = 0; $('cmpB').value = 1;
+    function setCmpImages() {
+      const a = VERSIONS[$('cmpA').value], b = VERSIONS[$('cmpB').value];
+      imgA.src = a.file; imgA.alt = a.caption; $('cmpTagA').textContent = a.short;
+      imgB.src = b.file; imgB.alt = b.caption; $('cmpTagB').textContent = b.short;
+    }
+    $('cmpA').onchange = $('cmpB').onchange = setCmpImages;
+    function setCmp(pct) {
+      pct = Math.max(0, Math.min(100, pct));
+      imgB.style.clipPath = `inset(0 0 0 ${pct}%)`;   // 右边那幅只露出分割线右侧
+      line.style.left = pct + '%';
+    }
+    let cmpDrag = false;
+    const cmpAt = e => { const r = cmp.getBoundingClientRect(); setCmp((e.clientX - r.left) / r.width * 100); };
+    cmp.addEventListener('pointerdown', e => { cmpDrag = true; cmp.setPointerCapture(e.pointerId); cmpAt(e); });
+    cmp.addEventListener('pointermove', e => { if (cmpDrag) cmpAt(e); });
+    cmp.addEventListener('pointerup', () => { cmpDrag = false; });
+    cmp.addEventListener('pointercancel', () => { cmpDrag = false; });
+    setCmpImages(); setCmp(50);
+
+    $('endBtn').onclick = () => {
+      walking = false;
+      for (const k in keys) keys[k] = false;
+      card.style.display = 'none';
+      togglePopup('compare', false); togglePopup('shot', false);
+      gallery.style.display = 'block';
+      gallery.scrollTop = 0;
+      requestAnimationFrame(() => gallery.classList.add('show'));
+    };
+    $('backRoom').onclick = () => {
+      gallery.classList.remove('show');
+      setTimeout(() => { gallery.style.display = 'none'; walking = true; }, 800);
+    };
+
+    // ========== 22. 每一帧：移动 + 墙色渐变 + 画画面 ==========
     const clock = new THREE.Clock();
     const z0 = player.z;
     function loop() {
+      requestAnimationFrame(loop);
       const dt = Math.min(clock.getDelta(), 0.05);
+      if (gallery.classList.contains('show')) return;    // 在展厅时不用画 3D，省电
 
-      if (flyT >= 0 && !walking) {
+      if (flyT >= 0 && !walking && intro.style.display !== 'none') {
         flyT = Math.min(flyT + dt / FLY_TIME, 1);
         const k = ease(flyT);
         player.z = z0 + (START_Z - z0) * k;
@@ -605,10 +938,12 @@
         if (!blocked(player.x, player.z + dz)) player.z += dz;
       }
 
+      // 墙色慢慢变到目标颜色（大约 1 秒）
+      wallMat.color.lerp(wallTarget, 1 - Math.exp(-dt * 4));
+
       camera.position.set(player.x, player.eye, player.z);
       camera.rotation.set(player.pitch, -player.yaw, 0, 'YXZ');
       renderer.render(scene, camera);
-      requestAnimationFrame(loop);
     }
     loop();
 
