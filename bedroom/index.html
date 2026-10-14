@@ -30,10 +30,16 @@
 
     /* ---------- 提示条 ---------- */
     #hint {
-      position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+      position: fixed; top: 56px; left: 50%; transform: translateX(-50%);
       background: rgba(43, 58, 85, 0.75); color: #f3e9c6; padding: 8px 14px;
       border-radius: 8px; font-size: 14px; pointer-events: none; text-align: center;
       max-width: calc(100% - 150px); box-sizing: border-box; transition: opacity 1s; opacity: 0;
+    }
+
+    /* ---------- 左上角进度 ---------- */
+    #progress {
+      position: fixed; top: 12px; left: 12px; z-index: 5; padding: 8px 12px; border-radius: 8px;
+      background: rgba(43, 58, 85, 0.75); color: #f3e9c6; font-size: 14px; display: none;
     }
 
     /* ---------- 右上角“对照原画” ---------- */
@@ -87,6 +93,7 @@
 
   <div id="hint">电脑：WASD 走动，拖动鼠标转视角<br>手机：左下摇杆走动，拖动屏幕转视角<br>点一下物品看介绍</div>
 
+  <div id="progress">已发现 0/6</div>
   <button id="compareBtn">对照原画</button>
   <div id="compare">
     <button class="close" id="compareClose" aria-label="关闭">×</button>
@@ -119,29 +126,34 @@
     // =====================================================================
     const INFO = {
       bed: {
-        title: '床', titleEn: 'The Bed',
-        zh: '（在这里填写床的中文介绍）',
-        en: '(English text about the bed goes here)'
+        title: '床', titleEn: 'Bed',
+        zh: '梵高说，这幅画想表达的就是"休息"。他希望人一看到它，头脑和想象力都能放松下来。',
+        en: 'Van Gogh said this painting was about rest. Looking at it should calm the mind.'
       },
       chair: {
-        title: '椅子', titleEn: 'The Chairs',
-        zh: '（在这里填写椅子的中文介绍）',
-        en: '(English text about the chairs goes here)'
+        title: '两把椅子', titleEn: 'Two chairs',
+        zh: '两把椅子、两个枕头……有人认为，这些成对的物品表达了他在等高更来同住的期待。',
+        en: 'Two chairs, two pillows. Some see this as Van Gogh waiting for Gauguin to join him.'
       },
       wall: {
-        title: '墙', titleEn: 'The Walls',
-        zh: '（在这里填写墙的中文介绍）',
-        en: '(English text about the walls goes here)'
-      },
-      window: {
-        title: '窗', titleEn: 'The Window',
-        zh: '（在这里填写窗户的中文介绍）',
-        en: '(English text about the window goes here)'
+        title: '墙', titleEn: 'Walls',
+        zh: '你看到的蓝墙，原本是紫色的。画里的红色颜料慢慢褪色，紫色就变成了蓝色。',
+        en: 'These blue walls were once violet. The red pigment faded over time.'
       },
       portrait: {
-        title: '墙上的肖像', titleEn: 'The Portraits',
-        zh: '（在这里填写肖像画的中文介绍）',
-        en: '(English text about the portraits goes here)'
+        title: '墙上的肖像', titleEn: 'Portraits',
+        zh: '床上方挂着两位朋友的画像：画家欧仁·博赫，和军官米利耶。',
+        en: 'Above the bed hang portraits of two friends: painter Eugène Boch and officer Milliet.'
+      },
+      floor: {
+        title: '地板', titleEn: 'Floor',
+        zh: '仔细看，画里几乎没有阴影。梵高故意用平涂的颜色，像日本浮世绘那样。',
+        en: 'There are almost no shadows. Van Gogh used flat colour, like Japanese prints.'
+      },
+      corner: {
+        title: '房间角落', titleEn: 'Corner',
+        zh: '房间看起来有点歪？不是画错了，梵高的卧室本来就是不规则的梯形。',
+        en: 'Does the room look crooked? It really was an irregular shape.'
       }
     };
 
@@ -286,6 +298,7 @@
 
     const floor = new THREE.Mesh(new THREE.ShapeGeometry(plan), paint('#ffffff', tileTexture()));
     floor.rotation.x = -Math.PI / 2;
+    floor.userData.info = 'floor';   // 地板可点击
     scene.add(floor);
 
     const ceil = new THREE.Mesh(new THREE.ShapeGeometry(plan), new THREE.MeshBasicMaterial({ color: C.ceiling }));
@@ -315,8 +328,17 @@
     // 墙角的深色竖线
     for (const [x, z] of [[L, BACK_L], [R, BACK_R], [L, FRONT], [R, FRONT]]) box(0.03, H, 0.03, C.line, x, H / 2, z);
 
-    // ========== 5. 窗户（后墙，绿色）—— 可点击 ==========
-    const win = onBackWall(-0.6, 1.75, 'window');
+    // 左后角（斜墙最明显的地方）放一根看不见的柱子，点到墙角附近就弹出“房间角落”卡片
+    const cornerHit = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.3, 0.3, H, 12),
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
+    );
+    cornerHit.position.set(L, H / 2, BACK_L);
+    cornerHit.userData.info = 'corner';
+    scene.add(cornerHit);
+
+    // ========== 5. 窗户（后墙，绿色） ==========
+    const win = onBackWall(-0.6, 1.75);
     box(1.0, 1.3, 0.02, '#bfe0c8', 0, 0, -0.01, win);          // 玻璃（淡淡的外面光）
     box(1.1, 0.08, 0.06, C.window, 0, 0.65, 0, win);            // 上框
     box(1.1, 0.08, 0.06, C.window, 0, -0.65, 0, win);           // 下框
@@ -476,6 +498,8 @@
       while (obj && !obj.userData.info) obj = obj.parent;   // 往上找到所属的物品
       if (obj) showCard(obj.userData.info); else card.style.display = 'none';
     }
+    const found = new Set();
+    const progress = document.getElementById('progress');
     function showCard(key) {
       const t = INFO[key];
       document.getElementById('cardTitle').textContent = t.title;
@@ -483,6 +507,10 @@
       document.getElementById('cardZh').textContent = t.zh;
       document.getElementById('cardEn').textContent = t.en;
       card.style.display = 'block';
+      // 记录看过哪些，更新进度 x/6
+      found.add(key);
+      const total = Object.keys(INFO).length;
+      progress.textContent = found.size === total ? `全部发现 ${total}/${total} 🎉` : `已发现 ${found.size}/${total}`;
     }
     document.getElementById('cardClose').onclick = () => { card.style.display = 'none'; };
 
@@ -536,6 +564,7 @@
       walking = true;
       intro.style.display = 'none';
       compareBtn.style.display = 'block';
+      progress.style.display = 'block';
       if (isTouch) joy.style.display = 'block';
       hint.style.opacity = 1;
     }
