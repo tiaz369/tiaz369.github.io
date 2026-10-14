@@ -110,6 +110,17 @@
     }
     .lightbox-close:hover { color:#f9f7f4; }
 
+    /* PROJECT CARD (Van Gogh bedroom) */
+    .project-card { display:grid; grid-template-columns:220px 1fr auto; gap:32px; align-items:center; margin-top:48px; padding:20px; border:1px solid var(--border); background:var(--bg2); color:var(--text); text-decoration:none; transition:border-color 0.2s; }
+    .project-card:hover { border-color:var(--text); }
+    .project-thumb { aspect-ratio:5/4; overflow:hidden; background:linear-gradient(135deg,#a6bfe3 0 60%,#b5533c 60% 100%); }
+    .project-thumb img { width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.6s ease; }
+    .project-card:hover .project-thumb img { transform:scale(1.04); }
+    .project-label { font-family:'JetBrains Mono',monospace; font-size:0.58rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--faint); margin-bottom:8px; }
+    .project-title { font-family:'Cormorant Garamond',serif; font-size:1.5rem; font-weight:300; line-height:1.2; margin-bottom:8px; }
+    .project-sub { font-size:0.8rem; color:var(--muted); line-height:1.75; }
+    .project-go { font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); }
+
     /* AI */
     .ai-intro { font-size:0.88rem; color:var(--muted); line-height:1.9; max-width:520px; margin-bottom:48px; margin-top:-32px; }
     .ai-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 60px; }
@@ -161,6 +172,7 @@
       .about-layout, .nexart-layout { grid-template-columns:1fr; gap:36px; }
       .about-meta { display:none; }
       .photo-grid { grid-template-columns:repeat(2,1fr); }
+      .project-card { grid-template-columns:1fr; gap:16px; }
       .ai-grid { grid-template-columns:1fr; }
       .film-row { grid-template-columns:1fr; gap:6px; }
       .film-genre { display:none; }
@@ -276,6 +288,16 @@
       </div>
     </div>
   </div>
+
+  <a class="project-card" href="/bedroom/">
+    <div class="project-thumb"><img src="bedroom/images/v1888.jpg" alt="Van Gogh, The Bedroom, 1888" onerror="this.remove()"/></div>
+    <div>
+      <div class="project-label">Interactive · 3D</div>
+      <div class="project-title">Walk into Van Gogh's Bedroom</div>
+      <div class="project-sub">The Bedroom in Arles, rebuilt as a room you can walk through — on desktop or phone.<br/>走进梵高《阿尔勒的卧室》</div>
+    </div>
+    <span class="project-go">Enter →</span>
+  </a>
 </div>
 
 <div class="section" id="ai">
