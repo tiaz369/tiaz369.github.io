@@ -7,13 +7,65 @@
   <style>
     html, body { margin: 0; height: 100%; overflow: hidden; background: #2b3a55; font-family: sans-serif; }
     canvas { display: block; touch-action: none; }
+    button { font-family: inherit; cursor: pointer; }
+
+    /* ---------- 开场：全屏原画 ---------- */
+    #intro {
+      position: fixed; inset: 0; z-index: 20; background: #1d2840;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: opacity 1.4s ease;
+    }
+    #intro img {
+      max-width: 100%; max-height: 80vh; object-fit: contain;
+      transition: transform 1.8s cubic-bezier(.55, 0, .3, 1);
+    }
+    #intro.zoom img { transform: scale(2.6); }
+    #intro.fade { opacity: 0; pointer-events: none; }
+    #introMissing { color: #f3e9c6; padding: 16px; text-align: center; display: none; }
+    #enter {
+      margin-top: 20px; padding: 12px 28px; font-size: 18px; border: none; border-radius: 30px;
+      background: #e8b84a; color: #2b3a55; box-shadow: 0 4px 14px rgba(0,0,0,.35);
+    }
+    #enter span { display: block; font-size: 12px; opacity: .75; }
+
+    /* ---------- 提示条 ---------- */
     #hint {
       position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
       background: rgba(43, 58, 85, 0.75); color: #f3e9c6; padding: 8px 14px;
       border-radius: 8px; font-size: 14px; pointer-events: none; text-align: center;
-      max-width: calc(100% - 32px); box-sizing: border-box; transition: opacity 1s;
+      max-width: calc(100% - 150px); box-sizing: border-box; transition: opacity 1s; opacity: 0;
     }
-    /* 手机上的虚拟摇杆（只在触屏设备显示） */
+
+    /* ---------- 右上角“对照原画” ---------- */
+    #compareBtn {
+      position: fixed; top: 12px; right: 12px; z-index: 5; padding: 8px 12px; border: none;
+      border-radius: 8px; background: #e8b84a; color: #2b3a55; font-size: 14px; display: none;
+    }
+    #compare {
+      position: fixed; top: 56px; right: 12px; z-index: 6; width: min(360px, calc(100% - 24px));
+      background: #f3e9c6; border: 3px solid #c99a3a; border-radius: 8px; padding: 6px;
+      box-sizing: border-box; display: none; box-shadow: 0 6px 20px rgba(0,0,0,.4);
+    }
+    #compare img { width: 100%; display: block; }
+    #compare p { margin: 8px; color: #2b3a55; font-size: 13px; }
+
+    /* ---------- 物品介绍卡片 ---------- */
+    #card {
+      position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 7;
+      width: min(420px, calc(100% - 32px)); box-sizing: border-box;
+      background: #f3e9c6; color: #2b3a55; border: 3px solid #2b3a55; border-radius: 10px;
+      padding: 14px 16px; display: none; box-shadow: 0 6px 20px rgba(0,0,0,.4);
+    }
+    #card h3 { margin: 0 28px 2px 0; font-size: 18px; }
+    #card .en-title { margin: 0 0 10px; font-size: 14px; opacity: .7; font-style: italic; }
+    #card p { margin: 6px 0; font-size: 14px; line-height: 1.55; }
+    #card .en { opacity: .8; }
+    .close {
+      position: absolute; top: 6px; right: 8px; border: none; background: none;
+      font-size: 22px; color: #2b3a55; line-height: 1;
+    }
+
+    /* ---------- 手机虚拟摇杆 ---------- */
     #joy {
       position: fixed; left: 24px; bottom: 24px; width: 110px; height: 110px;
       border-radius: 50%; background: rgba(243, 233, 198, 0.25);
@@ -26,7 +78,30 @@
   </style>
 </head>
 <body>
-  <div id="hint">电脑：WASD 走动，按住鼠标拖动转视角<br>手机：左下摇杆走动，拖动屏幕转视角</div>
+  <!-- 开场原画 -->
+  <div id="intro">
+    <img id="introImg" src="painting.jpg" alt="梵高《阿尔勒的卧室》" />
+    <div id="introMissing">（找不到 painting.jpg，请把原画图片放在和 index.html 同一个文件夹）</div>
+    <button id="enter">走进画里<span>Step into the painting</span></button>
+  </div>
+
+  <div id="hint">电脑：WASD 走动，拖动鼠标转视角<br>手机：左下摇杆走动，拖动屏幕转视角<br>点一下物品看介绍</div>
+
+  <button id="compareBtn">对照原画</button>
+  <div id="compare">
+    <button class="close" id="compareClose" aria-label="关闭">×</button>
+    <img src="painting.jpg" alt="梵高《阿尔勒的卧室》" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'" />
+    <p style="display:none">（找不到 painting.jpg）</p>
+  </div>
+
+  <div id="card">
+    <button class="close" id="cardClose" aria-label="关闭">×</button>
+    <h3 id="cardTitle"></h3>
+    <div class="en-title" id="cardTitleEn"></div>
+    <p id="cardZh"></p>
+    <p class="en" id="cardEn"></p>
+  </div>
+
   <div id="joy"><div id="knob"></div></div>
 
   <!-- 告诉浏览器去哪里下载 Three.js -->
@@ -36,6 +111,39 @@
 
   <script type="module">
     import * as THREE from 'three';
+
+    // =====================================================================
+    // ★ 卡片文字 —— 想改介绍内容，只需要改这里引号里的字 ★
+    //   title = 中文标题   titleEn = 英文标题
+    //   zh    = 中文介绍   en      = 英文介绍
+    // =====================================================================
+    const INFO = {
+      bed: {
+        title: '床', titleEn: 'The Bed',
+        zh: '（在这里填写床的中文介绍）',
+        en: '(English text about the bed goes here)'
+      },
+      chair: {
+        title: '椅子', titleEn: 'The Chairs',
+        zh: '（在这里填写椅子的中文介绍）',
+        en: '(English text about the chairs goes here)'
+      },
+      wall: {
+        title: '墙', titleEn: 'The Walls',
+        zh: '（在这里填写墙的中文介绍）',
+        en: '(English text about the walls goes here)'
+      },
+      window: {
+        title: '窗', titleEn: 'The Window',
+        zh: '（在这里填写窗户的中文介绍）',
+        en: '(English text about the window goes here)'
+      },
+      portrait: {
+        title: '墙上的肖像', titleEn: 'The Portraits',
+        zh: '（在这里填写肖像画的中文介绍）',
+        en: '(English text about the portraits goes here)'
+      }
+    };
 
     // ========== 1. 颜色（来自梵高的信） ==========
     const C = {
@@ -49,7 +157,7 @@
       basin:   '#3d6fc4', // 蓝色脸盆
       door:    '#a98cc9', // 丁香紫门
       line:    '#2b3a55', // 深蓝描边（油画的轮廓线）
-      ceiling: '#d9d6e8',
+      ceiling: '#e2dff0',
       seat:    '#c9a24a'  // 草编椅面
     };
 
@@ -64,10 +172,16 @@
 
     const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.05, 50);
 
-    // 房间尺寸（单位：米）
-    const W = 4, D = 5, H = 3;            // 宽、深、高
-    const L = -W / 2, R = W / 2;          // 左墙 x、右墙 x
-    const BACK = -D / 2, FRONT = D / 2;   // 后墙 z、前墙 z
+    // ========== 房间形状：不规则梯形 ==========
+    // 从上往下看：左右墙平行，前墙平直，后墙是斜的（左边更深、右边更浅）
+    const W = 4, H = 3;                // 宽、高（米）
+    const L = -W / 2, R = W / 2;       // 左墙 x、右墙 x
+    const FRONT = 2.5;                 // 前墙 z（身后）
+    const BACK_L = -2.8, BACK_R = -2.2; // 后墙在左角、右角的 z
+    // 后墙在某个 x 位置的 z 值
+    const backZ = x => BACK_L + (x - L) / W * (BACK_R - BACK_L);
+    // 后墙的倾斜角度（贴在后墙上的东西都要转这个角度）
+    const BACK_ROT = -Math.atan2(BACK_R - BACK_L, W);
 
     // ========== 3. 扁平的“色块”材质 ==========
     // 卡通材质 + 3 档明暗，让光影变成一块一块的，像油画笔触
@@ -81,7 +195,7 @@
     }
 
     // 用画布随手“画”一张有笔触的纹理
-    function brushTexture(base, strokeColors, count, repeatX, repeatY) {
+    function brushTexture(base, strokeColors, count) {
       const cv = document.createElement('canvas');
       cv.width = cv.height = 256;
       const g = cv.getContext('2d');
@@ -96,7 +210,6 @@
       }
       const t = new THREE.CanvasTexture(cv);
       t.wrapS = t.wrapT = THREE.RepeatWrapping;
-      t.repeat.set(repeatX, repeatY);
       t.colorSpace = THREE.SRGBColorSpace;
       return t;
     }
@@ -118,7 +231,7 @@
       }
       const t = new THREE.CanvasTexture(cv);
       t.wrapS = t.wrapT = THREE.RepeatWrapping;
-      t.repeat.set(W / 2, D / 2);  // 每块砖约 0.5 米
+      t.repeat.set(0.5, 0.5);  // 每块砖约 0.5 米
       t.colorSpace = THREE.SRGBColorSpace;
       return t;
     }
@@ -147,40 +260,63 @@
       return m;
     }
 
-    // ========== 4. 房间：地板、墙、天花板 ==========
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(W, D), paint('#ffffff', tileTexture()));
+    // 新建一个“组”（把几个零件合成一个物品），info 填 INFO 里的名字就能被点击
+    function group(x, y, z, rotY = 0, info = null) {
+      const g = new THREE.Group();
+      g.position.set(x, y, z);
+      g.rotation.y = rotY;
+      if (info) g.userData.info = info;
+      scene.add(g);
+      return g;
+    }
+
+    // 贴在后墙上的东西：给出 x 和高度 y，自动算出斜墙上的位置和角度
+    function onBackWall(x, y, info = null) {
+      return group(x, y, backZ(x) + 0.03, BACK_ROT, info);
+    }
+
+    // ========== 4. 房间：地板、墙、天花板（梯形） ==========
+    // 从上往下看的梯形轮廓（Shape 里的 y 对应房间里的 -z）
+    const plan = new THREE.Shape();
+    plan.moveTo(L, -FRONT);
+    plan.lineTo(R, -FRONT);
+    plan.lineTo(R, -BACK_R);
+    plan.lineTo(L, -BACK_L);
+    plan.closePath();
+
+    const floor = new THREE.Mesh(new THREE.ShapeGeometry(plan), paint('#ffffff', tileTexture()));
     floor.rotation.x = -Math.PI / 2;
     scene.add(floor);
 
-    const wallTex = brushTexture(C.wall, ['#a3a6d6', '#c6c3e6', '#9fa9d0'], 220, 2, 1);
-    const wallMat = paint('#ffffff', wallTex);
-
-    function wall(w, h, x, y, z, rotY) {
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), wallMat);
-      m.position.set(x, y, z);
-      m.rotation.y = rotY;
-      scene.add(m);
-    }
-    wall(W, H, 0, H / 2, BACK, 0);              // 后墙
-    wall(W, H, 0, H / 2, FRONT, Math.PI);       // 前墙（身后）
-    wall(D, H, L, H / 2, 0, Math.PI / 2);       // 左墙
-    wall(D, H, R, H / 2, 0, -Math.PI / 2);      // 右墙
-
-    const ceil = new THREE.Mesh(new THREE.PlaneGeometry(W, D), paint(C.ceiling));
-    ceil.rotation.x = Math.PI / 2;
+    const ceil = new THREE.Mesh(new THREE.ShapeGeometry(plan), new THREE.MeshBasicMaterial({ color: C.ceiling }));
+    ceil.rotation.x = -Math.PI / 2;
     ceil.position.y = H;
+    ceil.material.side = THREE.DoubleSide;
     scene.add(ceil);
 
-    // 墙角的深色线，加强“画”的感觉
-    for (const [x, z] of [[L, BACK], [R, BACK], [L, FRONT], [R, FRONT]]) box(0.03, H, 0.03, C.line, x, H / 2, z);
-    box(W, 0.03, 0.03, C.line, 0, 0.01, BACK + 0.01);
-    box(0.03, 0.03, D, C.line, L + 0.01, 0.01, 0);
-    box(0.03, 0.03, D, C.line, R - 0.01, 0.01, 0);
+    // 墙：从 (x1,z1) 到 (x2,z2) 的一面竖墙，可被点击（显示“墙”的卡片）
+    function wall(x1, z1, x2, z2) {
+      const len = Math.hypot(x2 - x1, z2 - z1);
+      const tex = brushTexture(C.wall, ['#a3a6d6', '#c6c3e6', '#9fa9d0'], 220);
+      tex.repeat.set(len / 2, 1);
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(len, H), paint('#ffffff', tex));
+      m.position.set((x1 + x2) / 2, H / 2, (z1 + z2) / 2);
+      m.rotation.y = -Math.atan2(z2 - z1, x2 - x1);   // 让墙面朝向房间里面
+      m.userData.info = 'wall';
+      scene.add(m);
+      // 墙脚的深色线
+      box(len, 0.03, 0.03, C.line, 0, -H / 2 + 0.015, 0.015, m);
+    }
+    wall(L, BACK_L, R, BACK_R);     // 斜的后墙
+    wall(R, BACK_R, R, FRONT);      // 右墙
+    wall(R, FRONT, L, FRONT);       // 前墙（身后）
+    wall(L, FRONT, L, BACK_L);      // 左墙
 
-    // ========== 5. 窗户（后墙，绿色） ==========
-    const win = new THREE.Group();
-    win.position.set(-0.6, 1.75, BACK + 0.03);
-    scene.add(win);
+    // 墙角的深色竖线
+    for (const [x, z] of [[L, BACK_L], [R, BACK_R], [L, FRONT], [R, FRONT]]) box(0.03, H, 0.03, C.line, x, H / 2, z);
+
+    // ========== 5. 窗户（后墙，绿色）—— 可点击 ==========
+    const win = onBackWall(-0.6, 1.75, 'window');
     box(1.0, 1.3, 0.02, '#bfe0c8', 0, 0, -0.01, win);          // 玻璃（淡淡的外面光）
     box(1.1, 0.08, 0.06, C.window, 0, 0.65, 0, win);            // 上框
     box(1.1, 0.08, 0.06, C.window, 0, -0.65, 0, win);           // 下框
@@ -192,10 +328,7 @@
 
     // ========== 6. 两扇门（丁香紫） ==========
     function door(x, z, rotY) {
-      const g = new THREE.Group();
-      g.position.set(x, 0, z);
-      g.rotation.y = rotY;
-      scene.add(g);
+      const g = group(x, 0, z, rotY);
       box(0.9, 2.1, 0.05, C.door, 0, 1.05, 0, g);                // 门板
       box(0.7, 0.8, 0.02, '#9a7dbd', 0, 1.5, 0.035, g);          // 上面的凹板
       box(0.7, 0.7, 0.02, '#9a7dbd', 0, 0.55, 0.035, g);         // 下面的凹板
@@ -203,13 +336,12 @@
       box(1.0, 0.06, 0.07, C.line, 0, 2.13, 0, g);               // 门框顶
     }
     door(L + 0.03, 1.5, Math.PI / 2);     // 左墙靠前的门
-    door(R - 0.03, 0.15, -Math.PI / 2);   // 右墙床尾旁的门
+    door(R - 0.03, 0.4, -Math.PI / 2);    // 右墙床尾旁的门
 
-    // ========== 7. 木床（黄油黄） ==========
-    const bed = new THREE.Group();
-    bed.position.set(1.3, 0, -1.45);   // 靠右墙、床头贴后墙
-    scene.add(bed);
-    const BW = 1.3, BL = 2.0;          // 床宽、床长
+    // ========== 7. 木床（黄油黄）—— 可点击 ==========
+    const BW = 1.3, BL = 2.0;            // 床宽、床长
+    const BED_X = 1.3, BED_Z = BACK_R + 0.03 + BL / 2;   // 靠右墙，床头贴着斜后墙
+    const bed = group(BED_X, 0, BED_Z, 0, 'bed');
     for (const [x, z] of [[-BW / 2, -BL / 2], [BW / 2, -BL / 2], [-BW / 2, BL / 2], [BW / 2, BL / 2]])
       box(0.1, z < 0 ? 1.3 : 0.9, 0.1, C.wood, x, z < 0 ? 0.65 : 0.45, z, bed); // 四根床柱
     box(BW, 0.9, 0.06, C.wood, 0, 0.75, -BL / 2, bed);          // 高高的床头板
@@ -223,12 +355,9 @@
     box(0.04, 0.35, 1.3, C.quilt, -BW / 2 + 0.01, 0.52, 0.3, bed); // 被子两边垂下来
     box(0.04, 0.35, 1.3, C.quilt, BW / 2 - 0.01, 0.52, 0.3, bed);
 
-    // ========== 8. 两把椅子（黄油黄，草编椅面） ==========
+    // ========== 8. 两把椅子（黄油黄，草编椅面）—— 可点击 ==========
     function chair(x, z, rotY) {
-      const g = new THREE.Group();
-      g.position.set(x, 0, z);
-      g.rotation.y = rotY;
-      scene.add(g);
+      const g = group(x, 0, z, rotY, 'chair');
       const s = 0.42;
       for (const [lx, lz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]])
         cyl(0.025, 0.025, 0.45, C.wood, lx * s / 2, 0.225, lz * s / 2, g);      // 四条腿
@@ -237,13 +366,12 @@
       for (const y of [0.65, 0.8, 0.94]) box(s, 0.04, 0.03, C.wood, 0, y, -s / 2, g);       // 靠背横档
       for (const lz of [-1, 1]) box(s, 0.025, 0.025, C.wood, 0, 0.15, lz * s / 2, g);       // 腿间横档
     }
-    chair(-1.3, -0.6, 0.5);    // 梳妆台旁边
-    chair(0.25, 0.3, -0.3);    // 床尾旁边
+    chair(-1.3, -0.9, 0.5);    // 梳妆台旁边
+    chair(0.25, 0.4, -0.3);    // 床尾旁边
 
     // ========== 9. 小桌（橙色）+ 脸盆和水壶（蓝色） ==========
-    const tbl = new THREE.Group();
-    tbl.position.set(-1.62, 0, -1.95);
-    scene.add(tbl);
+    const TBL_X = -1.62, TBL_Z = backZ(L) + 0.42;   // 左后角（斜墙最深的地方）
+    const tbl = group(TBL_X, 0, TBL_Z);
     box(0.65, 0.05, 0.55, C.table, 0, 0.75, 0, tbl);              // 桌面
     for (const [x, z] of [[-0.28, -0.23], [0.28, -0.23], [-0.28, 0.23], [0.28, 0.23]])
       box(0.05, 0.75, 0.05, C.table, x, 0.375, z, tbl);           // 桌腿
@@ -255,41 +383,38 @@
     cyl(0.025, 0.025, 0.12, '#5aa06a', 0.15, 0.83, -0.2, tbl);    // 绿色瓶子
 
     // ========== 10. 小镜子（左墙，桌子上方） ==========
-    box(0.04, 0.5, 0.4, '#8a5a2b', L + 0.03, 1.45, -1.95);        // 镜框
-    box(0.02, 0.42, 0.32, '#cfe0ea', L + 0.055, 1.45, -1.95);     // 镜面
-    box(0.02, 0.05, 0.6, '#f2ecd8', L + 0.04, 1.12, -1.2);        // 挂毛巾的横杆
-    box(0.02, 0.45, 0.25, '#e9efd0', L + 0.05, 0.9, -1.2);        // 毛巾
+    box(0.04, 0.5, 0.4, '#8a5a2b', L + 0.03, 1.45, TBL_Z);        // 镜框
+    box(0.02, 0.42, 0.32, '#cfe0ea', L + 0.055, 1.45, TBL_Z);     // 镜面
+    box(0.02, 0.05, 0.6, '#f2ecd8', L + 0.04, 1.12, TBL_Z + 0.75); // 挂毛巾的横杆
+    box(0.02, 0.45, 0.25, '#e9efd0', L + 0.05, 0.9, TBL_Z + 0.75); // 毛巾
 
     // ========== 11. 墙上的画框 ==========
-    function frame(w, h, picColor, x, y, z, rotY) {
-      const g = new THREE.Group();
-      g.position.set(x, y, z);
-      g.rotation.y = rotY;
-      scene.add(g);
+    function frame(g, w, h, picColor) {
       box(w, h, 0.04, '#c99a3a', 0, 0, 0, g);                    // 金黄色画框
       box(w - 0.08, h - 0.08, 0.02, picColor, 0, 0, 0.025, g);   // 画面
     }
-    // 床上方右墙：两幅肖像
-    frame(0.4, 0.5, '#6f8f4f', R - 0.03, 1.85, -2.0, -Math.PI / 2);
-    frame(0.4, 0.5, '#4f6fa0', R - 0.03, 1.85, -1.35, -Math.PI / 2);
+    // 床上方右墙：两幅肖像 —— 可点击
+    const RW = -Math.PI / 2, LW = Math.PI / 2;  // 贴右墙 / 左墙时的朝向
+    frame(group(R - 0.03, 1.85, BED_Z - 0.55, RW, 'portrait'), 0.4, 0.5, '#6f8f4f');
+    frame(group(R - 0.03, 1.85, BED_Z + 0.1, RW, 'portrait'), 0.4, 0.5, '#4f6fa0');
     // 床头上方后墙：一幅风景
-    frame(0.6, 0.45, '#9cbf6a', 1.3, 2.15, BACK + 0.03, 0);
+    frame(onBackWall(1.3, 2.15), 0.6, 0.45, '#9cbf6a');
     // 右墙更高处：两幅小画
-    frame(0.28, 0.22, '#e3c25a', R - 0.03, 2.45, -1.95, -Math.PI / 2);
-    frame(0.28, 0.22, '#d98a5a', R - 0.03, 2.45, -1.4, -Math.PI / 2);
+    frame(group(R - 0.03, 2.45, BED_Z - 0.5, RW), 0.28, 0.22, '#e3c25a');
+    frame(group(R - 0.03, 2.45, BED_Z + 0.05, RW), 0.28, 0.22, '#d98a5a');
     // 左墙镜子上方：两幅小画
-    frame(0.3, 0.25, '#7aa7c7', L + 0.03, 2.1, -2.15, Math.PI / 2);
-    frame(0.3, 0.25, '#c7a77a', L + 0.03, 2.1, -1.7, Math.PI / 2);
+    frame(group(L + 0.03, 2.1, TBL_Z - 0.22, LW), 0.3, 0.25, '#7aa7c7');
+    frame(group(L + 0.03, 2.1, TBL_Z + 0.25, LW), 0.3, 0.25, '#c7a77a');
 
     // 门旁边墙上的挂衣钉和一顶草帽（小细节）
-    for (const z of [-0.3, -0.05, 0.6]) cyl(0.015, 0.015, 0.08, C.line, R - 0.04, 1.85, z).rotation.z = Math.PI / 2;
-    cyl(0.18, 0.18, 0.02, '#e8c860', R - 0.12, 1.75, 0.6).rotation.z = Math.PI / 2;
+    for (const z of [1.15, 1.4, 1.7]) cyl(0.015, 0.015, 0.08, C.line, R - 0.04, 1.85, z).rotation.z = Math.PI / 2;
+    cyl(0.18, 0.18, 0.02, '#e8c860', R - 0.12, 1.75, 1.7).rotation.z = Math.PI / 2;
 
     // ========== 12. 柔和的光 ==========
     scene.add(new THREE.HemisphereLight('#fff4d6', '#b5533c', 1.6)); // 天空暖光 + 地面红色反光
     scene.add(new THREE.AmbientLight('#ffffff', 0.6));
     const sun = new THREE.DirectionalLight('#fff1c4', 1.2);           // 从窗户照进来的光
-    sun.position.set(-0.6, 2.5, BACK - 2);
+    sun.position.set(-0.6, 2.5, BACK_L - 2);
     sun.target.position.set(0.5, 0, 1);
     scene.add(sun, sun.target);
     const lamp = new THREE.PointLight('#ffe8b0', 0.8, 8);
@@ -297,44 +422,81 @@
     scene.add(lamp);
 
     // ========== 13. 第一人称：走动和转视角 ==========
-    const player = { x: 0, z: 1.9, yaw: 0, pitch: -0.08, eye: 1.55, r: 0.25 };
+    const START_Z = 1.9;
+    const player = { x: 0, z: 2.35, yaw: 0, pitch: -0.08, eye: 1.55, r: 0.25 };
+    let walking = false;   // 开场动画结束后才允许走动
     const keys = {};
     window.addEventListener('keydown', e => { keys[e.code] = true; });
     window.addEventListener('keyup', e => { keys[e.code] = false; });
 
     // 不能穿过的东西（矩形区域：x 最小, x 最大, z 最小, z 最大）
     const blocks = [
-      [1.3 - 0.7, 1.3 + 0.7, -1.45 - 1.05, -1.45 + 1.05], // 床
-      [-1.62 - 0.35, -1.62 + 0.35, -1.95 - 0.3, -1.95 + 0.3] // 桌子
+      [BED_X - 0.7, BED_X + 0.7, BED_Z - 1.05, BED_Z + 1.05],    // 床
+      [TBL_X - 0.35, TBL_X + 0.35, TBL_Z - 0.3, TBL_Z + 0.3]     // 桌子
     ];
 
     function blocked(x, z) {
       const r = player.r;
-      if (x < L + r || x > R - r || z < BACK + r || z > FRONT - r) return true; // 墙
+      if (x < L + r || x > R - r || z > FRONT - r || z < backZ(x) + r) return true; // 墙（包括斜墙）
       for (const [x0, x1, z0, z1] of blocks)
         if (x > x0 - r && x < x1 + r && z > z0 - r && z < z1 + r) return true;
       return false;
     }
 
-    // 拖动转视角（鼠标和触屏通用）
-    let dragId = null, lastX = 0, lastY = 0;
+    // 拖动转视角 + 轻点选物品（鼠标和触屏通用）
+    let dragId = null, lastX = 0, lastY = 0, downX = 0, downY = 0;
     const cvs = renderer.domElement;
-    cvs.addEventListener('pointerdown', e => { dragId = e.pointerId; lastX = e.clientX; lastY = e.clientY; hideHint(); });
+    cvs.addEventListener('pointerdown', e => {
+      dragId = e.pointerId; lastX = downX = e.clientX; lastY = downY = e.clientY;
+    });
     window.addEventListener('pointermove', e => {
-      if (e.pointerId !== dragId) return;
+      if (e.pointerId !== dragId || !walking) return;
       player.yaw   += (e.clientX - lastX) * 0.005;
       player.pitch -= (e.clientY - lastY) * 0.005;
       player.pitch = Math.max(-1.3, Math.min(1.3, player.pitch));
       lastX = e.clientX; lastY = e.clientY;
+      if (Math.hypot(e.clientX - downX, e.clientY - downY) > 8) hideHint();
     });
-    window.addEventListener('pointerup', e => { if (e.pointerId === dragId) dragId = null; });
+    window.addEventListener('pointerup', e => {
+      if (e.pointerId !== dragId) return;
+      dragId = null;
+      // 几乎没移动 = 是“点一下”，不是拖动
+      if (walking && Math.hypot(e.clientX - downX, e.clientY - downY) < 8) pick(e.clientX, e.clientY);
+    });
     window.addEventListener('pointercancel', e => { if (e.pointerId === dragId) dragId = null; });
 
-    // 手机虚拟摇杆
+    // ========== 14. 点击物品 → 弹出双语卡片 ==========
+    const raycaster = new THREE.Raycaster();
+    const card = document.getElementById('card');
+    function pick(cx, cy) {
+      const p = new THREE.Vector2(cx / window.innerWidth * 2 - 1, -(cy / window.innerHeight) * 2 + 1);
+      raycaster.setFromCamera(p, camera);
+      const hit = raycaster.intersectObjects(scene.children, true).find(h => h.object.isMesh);
+      let obj = hit && hit.object;
+      while (obj && !obj.userData.info) obj = obj.parent;   // 往上找到所属的物品
+      if (obj) showCard(obj.userData.info); else card.style.display = 'none';
+    }
+    function showCard(key) {
+      const t = INFO[key];
+      document.getElementById('cardTitle').textContent = t.title;
+      document.getElementById('cardTitleEn').textContent = t.titleEn;
+      document.getElementById('cardZh').textContent = t.zh;
+      document.getElementById('cardEn').textContent = t.en;
+      card.style.display = 'block';
+    }
+    document.getElementById('cardClose').onclick = () => { card.style.display = 'none'; };
+
+    // ========== 15. 右上角“对照原画” ==========
+    const compare = document.getElementById('compare');
+    const compareBtn = document.getElementById('compareBtn');
+    compareBtn.onclick = () => { compare.style.display = compare.style.display === 'block' ? 'none' : 'block'; };
+    document.getElementById('compareClose').onclick = () => { compare.style.display = 'none'; };
+
+    // ========== 16. 手机虚拟摇杆 ==========
     const joy = document.getElementById('joy'), knob = document.getElementById('knob');
     const joyMove = { x: 0, y: 0 };
     let joyId = null;
-    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) joy.style.display = 'block';
+    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     function setKnob(e) {
       const rect = joy.getBoundingClientRect();
       let dx = e.clientX - (rect.left + rect.width / 2);
@@ -354,25 +516,65 @@
     let hintHidden = false;
     function hideHint() { if (!hintHidden) { hintHidden = true; setTimeout(() => hint.style.opacity = 0, 2500); } }
 
-    // ========== 14. 每一帧：移动 + 画画面 ==========
+    // ========== 17. 开场：原画 → 镜头推进 → 3D 房间 ==========
+    const intro = document.getElementById('intro');
+    const introImg = document.getElementById('introImg');
+    introImg.onerror = () => { introImg.style.display = 'none'; document.getElementById('introMissing').style.display = 'block'; };
+
+    const FLY_TIME = 2.2;   // 推进动画的秒数
+    let flyT = -1;          // -1 = 还没开始
+    camera.fov = 40;        // 开场时镜头“拉远”，像看一幅画
+    camera.updateProjectionMatrix();
+
+    document.getElementById('enter').onclick = () => {
+      intro.classList.add('zoom');                           // 原画放大
+      setTimeout(() => intro.classList.add('fade'), 600);    // 然后淡出，露出 3D 房间
+      flyT = 0;                                              // 镜头开始往前推
+    };
+
+    function finishIntro() {
+      walking = true;
+      intro.style.display = 'none';
+      compareBtn.style.display = 'block';
+      if (isTouch) joy.style.display = 'block';
+      hint.style.opacity = 1;
+    }
+
+    // 缓动：开始慢、中间快、结束慢
+    const ease = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+
+    // ========== 18. 每一帧：移动 + 画画面 ==========
     const clock = new THREE.Clock();
+    const z0 = player.z;
     function loop() {
       const dt = Math.min(clock.getDelta(), 0.05);
-      let fwd = 0, side = 0;
-      if (keys.KeyW || keys.ArrowUp) fwd += 1;
-      if (keys.KeyS || keys.ArrowDown) fwd -= 1;
-      if (keys.KeyD || keys.ArrowRight) side += 1;
-      if (keys.KeyA || keys.ArrowLeft) side -= 1;
-      fwd -= joyMove.y; side += joyMove.x;
-      if (fwd || side) hideHint();
 
-      const speed = 1.6 * dt;
-      const sin = Math.sin(player.yaw), cos = Math.cos(player.yaw);
-      const dx = (side * cos + fwd * sin) * speed;
-      const dz = (side * sin - fwd * cos) * speed;
-      // 分开判断 x 和 z，这样贴着墙也能滑着走
-      if (!blocked(player.x + dx, player.z)) player.x += dx;
-      if (!blocked(player.x, player.z + dz)) player.z += dz;
+      if (flyT >= 0 && !walking) {
+        flyT = Math.min(flyT + dt / FLY_TIME, 1);
+        const k = ease(flyT);
+        player.z = z0 + (START_Z - z0) * k;
+        camera.fov = 40 + (70 - 40) * k;
+        camera.updateProjectionMatrix();
+        if (flyT >= 1) finishIntro();
+      }
+
+      if (walking) {
+        let fwd = 0, side = 0;
+        if (keys.KeyW || keys.ArrowUp) fwd += 1;
+        if (keys.KeyS || keys.ArrowDown) fwd -= 1;
+        if (keys.KeyD || keys.ArrowRight) side += 1;
+        if (keys.KeyA || keys.ArrowLeft) side -= 1;
+        fwd -= joyMove.y; side += joyMove.x;
+        if (fwd || side) hideHint();
+
+        const speed = 1.6 * dt;
+        const sin = Math.sin(player.yaw), cos = Math.cos(player.yaw);
+        const dx = (side * cos + fwd * sin) * speed;
+        const dz = (side * sin - fwd * cos) * speed;
+        // 分开判断 x 和 z，这样贴着墙也能滑着走
+        if (!blocked(player.x + dx, player.z)) player.x += dx;
+        if (!blocked(player.x, player.z + dz)) player.z += dz;
+      }
 
       camera.position.set(player.x, player.eye, player.z);
       camera.rotation.set(player.pitch, -player.yaw, 0, 'YXZ');
