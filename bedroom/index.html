@@ -29,6 +29,13 @@
     button { font-family: inherit; cursor: pointer; }
     .hidden { display: none !important; }
 
+    /* 中英切换：双语 = 两种都显示；中文 = 隐藏英文；EN = 隐藏中文 */
+    body.lang-zh .en, body.lang-zh .en-title { display: none !important; }
+    body.lang-en .zh { display: none !important; }
+    body:not(.lang-en) .en-ui { display: none !important; }
+    #langSwitch { position: fixed; right: 12px; bottom: 24px; z-index: 35; display: none; }
+    body.in-room #langSwitch { display: flex; }
+
     /* 油画感：边缘稍暗 + 一层很淡的画布颗粒（纯 CSS，不影响流畅度） */
     #canvasGrain {
       position: fixed; inset: 0; pointer-events: none; z-index: 1;
@@ -193,7 +200,7 @@
     }
   </style>
 </head>
-<body>
+<body class="lang-both">
   <div id="canvasGrain"></div>
   <img id="vpOverlay" src="images/v1888.jpg" alt="" />
 
@@ -201,36 +208,36 @@
   <div id="intro">
     <img id="introImg" src="images/v1888.jpg" alt="梵高《阿尔勒的卧室》1888" />
     <div id="introMissing" class="missing hidden">（找不到 images/v1888.jpg）</div>
-    <button id="enter">走进画里<span>Step into the painting</span></button>
+    <button id="enter"><span class="zh">走进画里</span><span class="en">Step into the painting</span></button>
   </div>
 
-  <div id="hint">电脑：WASD 走动，拖动鼠标转视角<br>手机：左下摇杆走动，拖动屏幕转视角<br>点一下物品看介绍 · 地上发光的圆点 = 梵高视角</div>
+  <div id="hint"><span class="zh">电脑：WASD 走动，拖动鼠标转视角<br>手机：左下摇杆走动，拖动屏幕转视角<br>点一下物品看介绍 · 地上发光的圆点 = 梵高视角</span><span class="en-ui">Desktop: WASD to walk, drag to look around<br>Phone: joystick to walk, drag to look around<br>Tap an object to learn more · The glowing circle = Van Gogh's viewpoint</span></div>
 
   <!-- 梵高视角点的说明和透明度滑杆 -->
   <div id="vpPanel">
-    <p>从这里看，就是画里的样子。<span class="en">From here, you see what the painting sees.</span></p>
-    <label>原画叠加 <input id="vpSlider" type="range" min="0" max="100" value="0" aria-label="原画叠加透明度" /> <span id="vpVal">0%</span></label>
+    <p><span class="zh">从这里看，就是画里的样子。</span><span class="en">From here, you see what the painting sees.</span></p>
+    <label><span class="zh">原画叠加</span><span class="en-ui">Painting overlay</span> <input id="vpSlider" type="range" min="0" max="100" value="0" aria-label="原画叠加透明度" /> <span id="vpVal">0%</span></label>
   </div>
 
   <!-- 左上角工具栏 -->
   <div id="tools" class="ui">
-    <button class="tool" id="compareBtn">对照原画</button>
-    <button class="tool" id="shotBtn">📷 拍一张</button>
+    <button class="tool" id="compareBtn"><span class="zh">对照原画</span><span class="en-ui">Original painting</span></button>
+    <button class="tool" id="shotBtn">📷 <span class="zh">拍一张</span><span class="en-ui">Snapshot</span></button>
     <div class="seg" id="modeSwitch">
-      <button data-mode="paint" class="on">原画质感</button>
-      <button data-mode="flat">简化色块</button>
+      <button data-mode="paint" class="on"><span class="zh">原画质感</span><span class="en-ui">Painted</span></button>
+      <button data-mode="flat"><span class="zh">简化色块</span><span class="en-ui">Flat colour</span></button>
     </div>
     <div class="seg" id="wallSwitch">
-      <button data-wall="blue" class="on">现在的蓝墙</button>
-      <button data-wall="violet">梵高画时的紫墙</button>
+      <button data-wall="blue" class="on"><span class="zh">现在的蓝墙</span><span class="en-ui">Blue today</span></button>
+      <button data-wall="violet"><span class="zh">梵高画时的紫墙</span><span class="en-ui">Violet, as painted</span></button>
     </div>
   </div>
 
   <!-- 右上角：进度 / 声音 / 进入结尾 -->
   <div id="status" class="ui">
     <div id="progress">已发现 0/7</div>
-    <button class="tool" id="soundBtn">🔇 声音</button>
-    <button class="tool hidden" id="endBtn">进入结尾 →</button>
+    <button class="tool" id="soundBtn">🔇 <span class="zh">声音</span><span class="en-ui">Sound</span></button>
+    <button class="tool hidden" id="endBtn"><span class="zh">进入结尾</span><span class="en-ui">To the ending</span> →</button>
   </div>
 
   <!-- 对照原画小窗 -->
@@ -243,55 +250,62 @@
   <div class="popup" id="shot">
     <button class="close" data-close="shot" aria-label="关闭">×</button>
     <img id="shotImg" alt="截图" />
-    <p><a id="shotSave" download="arles-bedroom.png">保存图片 · Save</a><br>手机上也可以长按图片保存 · On phones, long-press to save</p>
+    <p><a id="shotSave" download="arles-bedroom.png"><span class="zh">保存图片</span><span class="en"> Save</span></a><br><span class="zh">手机上也可以长按图片保存</span><span class="en"> On phones, long-press to save</span></p>
   </div>
   <div id="flash"></div>
 
   <div id="card">
     <button class="close" id="cardClose" aria-label="关闭">×</button>
-    <h3 id="cardTitle"></h3>
+    <h3 id="cardTitle" class="zh"></h3>
     <div class="en-title" id="cardTitleEn"></div>
-    <p id="cardZh"></p>
+    <p id="cardZh" class="zh"></p>
     <p class="en" id="cardEn"></p>
   </div>
 
   <div id="joy"><div id="knob"></div></div>
+
+  <!-- 右下角：中英切换（房间里和结尾页都能用） -->
+  <div class="seg" id="langSwitch">
+    <button data-lang="zh">中文</button>
+    <button data-lang="en">EN</button>
+    <button data-lang="both" class="on">双语</button>
+  </div>
 
   <!-- 结尾：三幕故事 -->
   <div id="gallery">
     <section class="act" id="act1">
       <img class="reveal" src="images/v1888.jpg" alt="梵高《阿尔勒的卧室》1888" />
       <div class="act-text reveal">
-        <h3><small>ACT I</small>第一幕 · 期待</h3>
-        <p>1888年秋，梵高租下阿尔勒的黄房子，梦想在这里建立画家们共同生活的"南方画室"。他画下自己的卧室，等待高更到来。</p>
+        <h3><small>ACT I</small><span class="zh">第一幕 · 期待</span></h3>
+        <p class="zh">1888年秋，梵高租下阿尔勒的黄房子，梦想在这里建立画家们共同生活的"南方画室"。他画下自己的卧室，等待高更到来。</p>
         <p class="en">In autumn 1888, Van Gogh rented the Yellow House in Arles, dreaming of a "Studio of the South" where artists would live together. He painted his bedroom while waiting for Gauguin.</p>
       </div>
-      <button class="next reveal" data-next="act2">下一幕 ↓</button>
+      <button class="next reveal" data-next="act2"><span class="zh">下一幕</span><span class="en-ui">Next</span> ↓</button>
     </section>
     <section class="act" id="act2">
       <img class="reveal" src="images/v1889-chicago.jpg" alt="梵高《阿尔勒的卧室》1889 · 芝加哥" />
       <div class="act-text reveal">
-        <h3><small>ACT II</small>第二幕 · 破碎</h3>
-        <p>高更来了，但两个月后，两人激烈争吵。梵高精神崩溃住进医院，高更离开了阿尔勒。这幅画后来也在他住院期间受潮损坏。</p>
+        <h3><small>ACT II</small><span class="zh">第二幕 · 破碎</span></h3>
+        <p class="zh">高更来了，但两个月后，两人激烈争吵。梵高精神崩溃住进医院，高更离开了阿尔勒。这幅画后来也在他住院期间受潮损坏。</p>
         <p class="en">Gauguin came, but two months later they quarrelled violently. Van Gogh broke down and was hospitalised, and Gauguin left Arles. The painting was later damaged by damp while he was in hospital.</p>
       </div>
-      <button class="next reveal" data-next="act3">下一幕 ↓</button>
+      <button class="next reveal" data-next="act3"><span class="zh">下一幕</span><span class="en-ui">Next</span> ↓</button>
     </section>
     <section class="act" id="act3">
       <img class="reveal" src="images/v1889-orsay.jpg" alt="梵高《阿尔勒的卧室》1889 · 奥赛" />
       <div class="act-text reveal">
-        <h3><small>ACT III</small>第三幕 · 回望</h3>
-        <p>1889年，梵高自愿住进圣雷米的疗养院，在那里重画了这间卧室两次，较小的一幅送给母亲和妹妹。那时，他已经不住在这里了。</p>
+        <h3><small>ACT III</small><span class="zh">第三幕 · 回望</span></h3>
+        <p class="zh">1889年，梵高自愿住进圣雷米的疗养院，在那里重画了这间卧室两次，较小的一幅送给母亲和妹妹。那时，他已经不住在这里了。</p>
         <p class="en">In 1889, Van Gogh entered an asylum in Saint-Rémy, where he painted the bedroom twice more, the smaller one for his mother and sister. By then, he no longer lived there.</p>
       </div>
-      <button class="next reveal" data-next="actEnd">下一幕 ↓</button>
+      <button class="next reveal" data-next="actEnd"><span class="zh">下一幕</span><span class="en-ui">Next</span> ↓</button>
     </section>
     <section class="act final" id="actEnd">
-      <h2 class="reveal">一间等人的房间。<small>A room that waited.</small></h2>
+      <h2 class="reveal"><span class="zh">一间等人的房间。</span><small class="en">A room that waited.</small></h2>
 
       <div class="versions" id="versions"></div>
 
-      <div class="section-title">找不同<small>Compare two versions — drag left and right</small></div>
+      <div class="section-title"><span class="zh">找不同</span><small class="en">Compare two versions — drag left and right</small></div>
       <div class="cmp-pick">
         <select id="cmpA" aria-label="左边的版本"></select>
         <span>↔</span>
@@ -305,14 +319,14 @@
         <span class="cmp-tag" id="cmpTagB" style="right:8px"></span>
       </div>
 
-      <div class="section-title">去看真迹<small>See the real paintings</small></div>
+      <div class="section-title"><span class="zh">去看真迹</span><small class="en">See the real paintings</small></div>
       <div class="links">
-        <a href="https://www.vangoghmuseum.nl" target="_blank" rel="noopener">梵高博物馆 · Van Gogh Museum</a>
-        <a href="https://www.artic.edu" target="_blank" rel="noopener">芝加哥艺术博物馆 · Art Institute of Chicago</a>
-        <a href="https://www.musee-orsay.fr" target="_blank" rel="noopener">奥赛博物馆 · Musée d'Orsay</a>
+        <a href="https://www.vangoghmuseum.nl" target="_blank" rel="noopener"><span class="zh">梵高博物馆 · </span>Van Gogh Museum</a>
+        <a href="https://www.artic.edu" target="_blank" rel="noopener"><span class="zh">芝加哥艺术博物馆 · </span>Art Institute of Chicago</a>
+        <a href="https://www.musee-orsay.fr" target="_blank" rel="noopener"><span class="zh">奥赛博物馆 · </span>Musée d'Orsay</a>
       </div>
 
-      <button class="tool" id="backRoom">← 回到房间 · Back to the room</button>
+      <button class="tool" id="backRoom">← <span class="zh">回到房间</span><span class="en-ui">Back to the room</span></button>
     </section>
   </div>
 
@@ -323,6 +337,7 @@
 
   <script type="module">
     import * as THREE from 'three';
+    let lang = 'both';   // 当前语言：zh / en / both（右下角切换）
 
     // =====================================================================
     // ★ 卡片文字 —— 想改介绍内容，只需要改这里引号里的字 ★
@@ -369,9 +384,12 @@
 
     // ★ 三个版本（结尾最后一屏用）★
     const VERSIONS = [
-      { file: 'images/v1888.jpg',         short: '1888 · 阿姆斯特丹', caption: '1888年10月 · 阿姆斯特丹梵高博物馆 · Van Gogh Museum, Amsterdam' },
-      { file: 'images/v1889-chicago.jpg', short: '1889 · 芝加哥',     caption: '1889年9月 · 芝加哥艺术博物馆 · Art Institute of Chicago' },
-      { file: 'images/v1889-orsay.jpg',   short: '1889 · 巴黎',       caption: "1889年 · 巴黎奥赛博物馆 · Musée d'Orsay, Paris" }
+      { file: 'images/v1888.jpg',         short: '1888 · 阿姆斯特丹', shortEn: '1888 · Amsterdam',
+        caption: '1888年10月 · 阿姆斯特丹梵高博物馆 · Van Gogh Museum, Amsterdam', zh: '1888年10月 · 阿姆斯特丹梵高博物馆', en: 'October 1888 · Van Gogh Museum, Amsterdam' },
+      { file: 'images/v1889-chicago.jpg', short: '1889 · 芝加哥', shortEn: '1889 · Chicago',
+        caption: '1889年9月 · 芝加哥艺术博物馆 · Art Institute of Chicago', zh: '1889年9月 · 芝加哥艺术博物馆', en: 'September 1889 · Art Institute of Chicago' },
+      { file: 'images/v1889-orsay.jpg',   short: '1889 · 巴黎', shortEn: '1889 · Paris',
+        caption: "1889年 · 巴黎奥赛博物馆 · Musée d'Orsay, Paris", zh: '1889年 · 巴黎奥赛博物馆', en: "1889 · Musée d'Orsay, Paris" }
     ];
 
     // ========== 1. 颜色（来自梵高的信） ==========
@@ -878,6 +896,7 @@
       if (obj) showCard(obj.userData.info); else card.style.display = 'none';
     }
     const found = new Set();
+    function updateProgress() { $('progress').textContent = (lang === 'en' ? 'Found ' : '已发现 ') + `${found.size}/${TOTAL}`; }
     const TOTAL = Object.keys(INFO).length;
     function showCard(key) {
       const t = INFO[key];
@@ -887,7 +906,7 @@
       $('cardEn').textContent = t.en;
       card.style.display = 'block';
       found.add(key);
-      $('progress').textContent = `已发现 ${found.size}/${TOTAL}`;
+      updateProgress();
       if (found.size === TOTAL) $('endBtn').classList.remove('hidden');
     }
     $('cardClose').onclick = () => { card.style.display = 'none'; };
@@ -964,7 +983,7 @@
     function scheduleBird() { birdTimer = setTimeout(() => { if (soundOn) { birdCall(); scheduleBird(); } }, 1500 + Math.random() * 4500); }
     function setSound(on) {
       soundOn = on;
-      $('soundBtn').textContent = on ? '🔊 声音' : '🔇 声音';
+      $('soundBtn').innerHTML = (on ? '🔊 ' : '🔇 ') + '<span class="zh">声音</span><span class="en-ui">Sound</span>';
       if (on) { if (!actx) setupAudio(); actx.resume(); master.gain.setTargetAtTime(0.7, actx.currentTime, 0.4); clearTimeout(birdTimer); birdCall(); scheduleBird(); }
       else if (actx) { master.gain.setTargetAtTime(0, actx.currentTime, 0.2); clearTimeout(birdTimer); }
     }
@@ -1053,7 +1072,8 @@
       const img = document.createElement('img');
       img.src = v.file; img.alt = v.caption; img.loading = 'lazy';
       onMissing(img, `（找不到 ${v.file}）`, 'ph');
-      const cap = document.createElement('figcaption'); cap.textContent = v.caption;
+      const cap = document.createElement('figcaption');
+      cap.dataset.zh = v.zh; cap.dataset.en = v.en; cap.dataset.both = v.caption; cap.textContent = v.caption;
       fig.append(img, cap);
       $('versions').append(fig);
     }
@@ -1068,8 +1088,8 @@
     $('cmpA').value = 0; $('cmpB').value = 1;
     function setCmpImages() {
       const a = VERSIONS[$('cmpA').value], b = VERSIONS[$('cmpB').value];
-      imgA.src = a.file; imgA.alt = a.caption; $('cmpTagA').textContent = a.short;
-      imgB.src = b.file; imgB.alt = b.caption; $('cmpTagB').textContent = b.short;
+      imgA.src = a.file; imgA.alt = a.caption; $('cmpTagA').textContent = lang === 'en' ? a.shortEn : a.short;
+      imgB.src = b.file; imgB.alt = b.caption; $('cmpTagB').textContent = lang === 'en' ? b.shortEn : b.short;
     }
     $('cmpA').onchange = $('cmpB').onchange = setCmpImages;
     function setCmp(pct) {
@@ -1099,6 +1119,24 @@
       gallery.classList.remove('show');
       setTimeout(() => { gallery.style.display = 'none'; walking = true; }, 800);
     };
+
+    // ========== 23b. 中英切换（记住上次的选择） ==========
+    function setLang(l) {
+      lang = l;
+      document.body.classList.remove('lang-zh', 'lang-en', 'lang-both');
+      document.body.classList.add('lang-' + l);
+      document.documentElement.lang = l === 'en' ? 'en' : 'zh-CN';
+      document.querySelectorAll('#langSwitch button').forEach(b => b.classList.toggle('on', b.dataset.lang === l));
+      document.querySelectorAll('#versions figcaption').forEach(c => c.textContent = c.dataset[l]);
+      document.querySelectorAll('#cmpA option, #cmpB option').forEach(o => o.textContent = l === 'en' ? VERSIONS[o.value].shortEn : VERSIONS[o.value].short);
+      setCmpImages();
+      updateProgress();
+      try { localStorage.setItem('bedroomLang', l); } catch (e) {}
+    }
+    document.querySelectorAll('#langSwitch button').forEach(b => b.onclick = () => setLang(b.dataset.lang));
+    let savedLang = 'both';
+    try { savedLang = localStorage.getItem('bedroomLang') || 'both'; } catch (e) {}
+    setLang(['zh', 'en', 'both'].includes(savedLang) ? savedLang : 'both');
 
     // ========== 24. 每一帧：移动 + 梵高视角 + 墙色渐变 + 画画面 ==========
     const clock = new THREE.Clock();
