@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>阿尔勒的卧室</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #2b3a55; font-family: sans-serif; }
+    canvas { display: block; touch-action: none; }
+    #hint {
+      position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+      background: rgba(43, 58, 85, 0.75); color: #f3e9c6; padding: 8px 14px;
+      border-radius: 8px; font-size: 14px; pointer-events: none; text-align: center;
+      max-width: calc(100% - 32px); box-sizing: border-box; transition: opacity 1s;
+    }
+    /* 手机上的虚拟摇杆（只在触屏设备显示） */
+    #joy {
+      position: fixed; left: 24px; bottom: 24px; width: 110px; height: 110px;
+      border-radius: 50%; background: rgba(243, 233, 198, 0.25);
+      border: 2px solid rgba(243, 233, 198, 0.6); display: none; touch-action: none;
+    }
+    #knob {
+      position: absolute; left: 35px; top: 35px; width: 40px; height: 40px;
+      border-radius: 50%; background: rgba(243, 233, 198, 0.85);
+    }
+  </style>
+</head>
+<body>
+  <div id="hint">电脑：WASD 走动，按住鼠标拖动转视角<br>手机：左下摇杆走动，拖动屏幕转视角</div>
+  <div id="joy"><div id="knob"></div></div>
+
+  <!-- 告诉浏览器去哪里下载 Three.js -->
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+
+    // ========== 1. 颜色（来自梵高的信） ==========
+    const C = {
+      wall:    '#b4b5dc', // 淡紫色墙
+      floor:   '#b5533c', // 红色地砖
+      wood:    '#e8b84a', // 黄油黄（床、椅子）
+      sheet:   '#e4efa8', // 很淡的柠檬绿（床单、枕头）
+      quilt:   '#d42a2a', // 猩红色被子
+      window:  '#4f9a5a', // 绿色窗户
+      table:   '#e08a2e', // 橙色梳妆台
+      basin:   '#3d6fc4', // 蓝色脸盆
+      door:    '#a98cc9', // 丁香紫门
+      line:    '#2b3a55', // 深蓝描边（油画的轮廓线）
+      ceiling: '#d9d6e8',
+      seat:    '#c9a24a'  // 草编椅面
+    };
+
+    // ========== 2. 基本场景 ==========
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(C.line);
+
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.05, 50);
+
+    // 房间尺寸（单位：米）
+    const W = 4, D = 5, H = 3;            // 宽、深、高
+    const L = -W / 2, R = W / 2;          // 左墙 x、右墙 x
+    const BACK = -D / 2, FRONT = D / 2;   // 后墙 z、前墙 z
+
+    // ========== 3. 扁平的“色块”材质 ==========
+    // 卡通材质 + 3 档明暗，让光影变成一块一块的，像油画笔触
+    const steps = new Uint8Array([90, 170, 255]);
+    const gradient = new THREE.DataTexture(steps, 3, 1, THREE.RedFormat);
+    gradient.minFilter = gradient.magFilter = THREE.NearestFilter;
+    gradient.needsUpdate = true;
+
+    function paint(color, map) {
+      return new THREE.MeshToonMaterial({ color, gradientMap: gradient, map: map || null });
+    }
+
+    // 用画布随手“画”一张有笔触的纹理
+    function brushTexture(base, strokeColors, count, repeatX, repeatY) {
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = 256;
+      const g = cv.getContext('2d');
+      g.fillStyle = base; g.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < count; i++) {
+        g.strokeStyle = strokeColors[i % strokeColors.length];
+        g.globalAlpha = 0.25 + Math.random() * 0.3;
+        g.lineWidth = 3 + Math.random() * 5;
+        g.lineCap = 'round';
+        const x = Math.random() * 256, y = Math.random() * 256, a = Math.random() * 0.6 - 0.3;
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * 30, y + Math.sin(a) * 30 + 20); g.stroke();
+      }
+      const t = new THREE.CanvasTexture(cv);
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.repeat.set(repeatX, repeatY);
+      t.colorSpace = THREE.SRGBColorSpace;
+      return t;
+    }
+
+    // 红色地砖纹理：一格一格、颜色略有不同，缝是偏绿的线
+    function tileTexture() {
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = 256;
+      const g = cv.getContext('2d');
+      g.fillStyle = '#6f7d4f'; g.fillRect(0, 0, 256, 256); // 砖缝颜色
+      const reds = ['#b5533c', '#c0603f', '#a9493a', '#c86b45', '#b0573f'];
+      const n = 4, s = 256 / n;
+      for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+        g.fillStyle = reds[Math.floor(Math.random() * reds.length)];
+        g.fillRect(i * s + 3, j * s + 3, s - 6, s - 6);
+        g.strokeStyle = '#d98055'; g.globalAlpha = 0.4; g.lineWidth = 4;
+        g.beginPath(); g.moveTo(i * s + 10, j * s + 20); g.lineTo(i * s + s - 12, j * s + 30); g.stroke();
+        g.globalAlpha = 1;
+      }
+      const t = new THREE.CanvasTexture(cv);
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.repeat.set(W / 2, D / 2);  // 每块砖约 0.5 米
+      t.colorSpace = THREE.SRGBColorSpace;
+      return t;
+    }
+
+    const outlineMat = new THREE.LineBasicMaterial({ color: C.line });
+
+    // 给物体加深色轮廓线
+    function outline(mesh) {
+      mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry, 30), outlineMat));
+      return mesh;
+    }
+
+    // 造一个方块：宽、高、深、颜色/材质、位置
+    function box(w, h, d, mat, x, y, z, parent = scene) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), typeof mat === 'string' ? paint(mat) : mat);
+      m.position.set(x, y, z);
+      parent.add(outline(m));
+      return m;
+    }
+
+    // 造一个圆柱：顶半径、底半径、高、颜色、位置
+    function cyl(rt, rb, h, color, x, y, z, parent = scene) {
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, 16), paint(color));
+      m.position.set(x, y, z);
+      parent.add(outline(m));
+      return m;
+    }
+
+    // ========== 4. 房间：地板、墙、天花板 ==========
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(W, D), paint('#ffffff', tileTexture()));
+    floor.rotation.x = -Math.PI / 2;
+    scene.add(floor);
+
+    const wallTex = brushTexture(C.wall, ['#a3a6d6', '#c6c3e6', '#9fa9d0'], 220, 2, 1);
+    const wallMat = paint('#ffffff', wallTex);
+
+    function wall(w, h, x, y, z, rotY) {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), wallMat);
+      m.position.set(x, y, z);
+      m.rotation.y = rotY;
+      scene.add(m);
+    }
+    wall(W, H, 0, H / 2, BACK, 0);              // 后墙
+    wall(W, H, 0, H / 2, FRONT, Math.PI);       // 前墙（身后）
+    wall(D, H, L, H / 2, 0, Math.PI / 2);       // 左墙
+    wall(D, H, R, H / 2, 0, -Math.PI / 2);      // 右墙
+
+    const ceil = new THREE.Mesh(new THREE.PlaneGeometry(W, D), paint(C.ceiling));
+    ceil.rotation.x = Math.PI / 2;
+    ceil.position.y = H;
+    scene.add(ceil);
+
+    // 墙角的深色线，加强“画”的感觉
+    for (const [x, z] of [[L, BACK], [R, BACK], [L, FRONT], [R, FRONT]]) box(0.03, H, 0.03, C.line, x, H / 2, z);
+    box(W, 0.03, 0.03, C.line, 0, 0.01, BACK + 0.01);
+    box(0.03, 0.03, D, C.line, L + 0.01, 0.01, 0);
+    box(0.03, 0.03, D, C.line, R - 0.01, 0.01, 0);
+
+    // ========== 5. 窗户（后墙，绿色） ==========
+    const win = new THREE.Group();
+    win.position.set(-0.6, 1.75, BACK + 0.03);
+    scene.add(win);
+    box(1.0, 1.3, 0.02, '#bfe0c8', 0, 0, -0.01, win);          // 玻璃（淡淡的外面光）
+    box(1.1, 0.08, 0.06, C.window, 0, 0.65, 0, win);            // 上框
+    box(1.1, 0.08, 0.06, C.window, 0, -0.65, 0, win);           // 下框
+    box(0.08, 1.38, 0.06, C.window, -0.52, 0, 0, win);          // 左框
+    box(0.08, 1.38, 0.06, C.window, 0.52, 0, 0, win);           // 右框
+    box(0.06, 1.3, 0.05, C.window, 0, 0, 0.01, win);            // 中间竖条
+    for (const y of [-0.22, 0.22]) box(1.0, 0.04, 0.05, C.window, 0, y, 0.01, win); // 横条
+    box(1.25, 0.06, 0.18, C.window, 0, -0.7, 0.06, win);        // 窗台
+
+    // ========== 6. 两扇门（丁香紫） ==========
+    function door(x, z, rotY) {
+      const g = new THREE.Group();
+      g.position.set(x, 0, z);
+      g.rotation.y = rotY;
+      scene.add(g);
+      box(0.9, 2.1, 0.05, C.door, 0, 1.05, 0, g);                // 门板
+      box(0.7, 0.8, 0.02, '#9a7dbd', 0, 1.5, 0.035, g);          // 上面的凹板
+      box(0.7, 0.7, 0.02, '#9a7dbd', 0, 0.55, 0.035, g);         // 下面的凹板
+      cyl(0.03, 0.03, 0.06, C.line, 0.33, 1.0, 0.06, g).rotation.x = Math.PI / 2; // 门把手
+      box(1.0, 0.06, 0.07, C.line, 0, 2.13, 0, g);               // 门框顶
+    }
+    door(L + 0.03, 1.5, Math.PI / 2);     // 左墙靠前的门
+    door(R - 0.03, 0.15, -Math.PI / 2);   // 右墙床尾旁的门
+
+    // ========== 7. 木床（黄油黄） ==========
+    const bed = new THREE.Group();
+    bed.position.set(1.3, 0, -1.45);   // 靠右墙、床头贴后墙
+    scene.add(bed);
+    const BW = 1.3, BL = 2.0;          // 床宽、床长
+    for (const [x, z] of [[-BW / 2, -BL / 2], [BW / 2, -BL / 2], [-BW / 2, BL / 2], [BW / 2, BL / 2]])
+      box(0.1, z < 0 ? 1.3 : 0.9, 0.1, C.wood, x, z < 0 ? 0.65 : 0.45, z, bed); // 四根床柱
+    box(BW, 0.9, 0.06, C.wood, 0, 0.75, -BL / 2, bed);          // 高高的床头板
+    box(BW, 0.55, 0.06, C.wood, 0, 0.55, BL / 2, bed);          // 床尾板
+    box(0.05, 0.25, BL, C.wood, -BW / 2, 0.35, 0, bed);         // 两侧床沿
+    box(0.05, 0.25, BL, C.wood, BW / 2, 0.35, 0, bed);
+    box(BW - 0.08, 0.18, BL - 0.1, C.sheet, 0, 0.55, 0, bed);   // 床垫 + 床单
+    box(0.55, 0.14, 0.35, C.sheet, -0.3, 0.72, -BL / 2 + 0.3, bed); // 两个枕头
+    box(0.55, 0.14, 0.35, C.sheet, 0.3, 0.72, -BL / 2 + 0.3, bed);
+    box(BW - 0.02, 0.12, 1.3, C.quilt, 0, 0.69, 0.3, bed);      // 猩红被子
+    box(0.04, 0.35, 1.3, C.quilt, -BW / 2 + 0.01, 0.52, 0.3, bed); // 被子两边垂下来
+    box(0.04, 0.35, 1.3, C.quilt, BW / 2 - 0.01, 0.52, 0.3, bed);
+
+    // ========== 8. 两把椅子（黄油黄，草编椅面） ==========
+    function chair(x, z, rotY) {
+      const g = new THREE.Group();
+      g.position.set(x, 0, z);
+      g.rotation.y = rotY;
+      scene.add(g);
+      const s = 0.42;
+      for (const [lx, lz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]])
+        cyl(0.025, 0.025, 0.45, C.wood, lx * s / 2, 0.225, lz * s / 2, g);      // 四条腿
+      box(s + 0.04, 0.05, s + 0.04, C.seat, 0, 0.47, 0, g);                       // 椅面
+      for (const lx of [-1, 1]) cyl(0.025, 0.025, 0.5, C.wood, lx * s / 2, 0.72, -s / 2, g); // 靠背柱
+      for (const y of [0.65, 0.8, 0.94]) box(s, 0.04, 0.03, C.wood, 0, y, -s / 2, g);       // 靠背横档
+      for (const lz of [-1, 1]) box(s, 0.025, 0.025, C.wood, 0, 0.15, lz * s / 2, g);       // 腿间横档
+    }
+    chair(-1.3, -0.6, 0.5);    // 梳妆台旁边
+    chair(0.25, 0.3, -0.3);    // 床尾旁边
+
+    // ========== 9. 小桌（橙色）+ 脸盆和水壶（蓝色） ==========
+    const tbl = new THREE.Group();
+    tbl.position.set(-1.62, 0, -1.95);
+    scene.add(tbl);
+    box(0.65, 0.05, 0.55, C.table, 0, 0.75, 0, tbl);              // 桌面
+    for (const [x, z] of [[-0.28, -0.23], [0.28, -0.23], [-0.28, 0.23], [0.28, 0.23]])
+      box(0.05, 0.75, 0.05, C.table, x, 0.375, z, tbl);           // 桌腿
+    cyl(0.2, 0.12, 0.1, C.basin, 0.05, 0.83, 0.05, tbl);          // 脸盆
+    cyl(0.17, 0.17, 0.02, '#8fb3e8', 0.05, 0.87, 0.05, tbl);      // 盆里的水
+    cyl(0.06, 0.08, 0.22, C.basin, -0.2, 0.89, -0.12, tbl);       // 水壶身
+    cyl(0.04, 0.06, 0.06, C.basin, -0.2, 1.03, -0.12, tbl);       // 水壶口
+    cyl(0.03, 0.03, 0.08, '#e9e2c6', 0.22, 0.81, -0.18, tbl);     // 小瓶子
+    cyl(0.025, 0.025, 0.12, '#5aa06a', 0.15, 0.83, -0.2, tbl);    // 绿色瓶子
+
+    // ========== 10. 小镜子（左墙，桌子上方） ==========
+    box(0.04, 0.5, 0.4, '#8a5a2b', L + 0.03, 1.45, -1.95);        // 镜框
+    box(0.02, 0.42, 0.32, '#cfe0ea', L + 0.055, 1.45, -1.95);     // 镜面
+    box(0.02, 0.05, 0.6, '#f2ecd8', L + 0.04, 1.12, -1.2);        // 挂毛巾的横杆
+    box(0.02, 0.45, 0.25, '#e9efd0', L + 0.05, 0.9, -1.2);        // 毛巾
+
+    // ========== 11. 墙上的画框 ==========
+    function frame(w, h, picColor, x, y, z, rotY) {
+      const g = new THREE.Group();
+      g.position.set(x, y, z);
+      g.rotation.y = rotY;
+      scene.add(g);
+      box(w, h, 0.04, '#c99a3a', 0, 0, 0, g);                    // 金黄色画框
+      box(w - 0.08, h - 0.08, 0.02, picColor, 0, 0, 0.025, g);   // 画面
+    }
+    // 床上方右墙：两幅肖像
+    frame(0.4, 0.5, '#6f8f4f', R - 0.03, 1.85, -2.0, -Math.PI / 2);
+    frame(0.4, 0.5, '#4f6fa0', R - 0.03, 1.85, -1.35, -Math.PI / 2);
+    // 床头上方后墙：一幅风景
+    frame(0.6, 0.45, '#9cbf6a', 1.3, 2.15, BACK + 0.03, 0);
+    // 右墙更高处：两幅小画
+    frame(0.28, 0.22, '#e3c25a', R - 0.03, 2.45, -1.95, -Math.PI / 2);
+    frame(0.28, 0.22, '#d98a5a', R - 0.03, 2.45, -1.4, -Math.PI / 2);
+    // 左墙镜子上方：两幅小画
+    frame(0.3, 0.25, '#7aa7c7', L + 0.03, 2.1, -2.15, Math.PI / 2);
+    frame(0.3, 0.25, '#c7a77a', L + 0.03, 2.1, -1.7, Math.PI / 2);
+
+    // 门旁边墙上的挂衣钉和一顶草帽（小细节）
+    for (const z of [-0.3, -0.05, 0.6]) cyl(0.015, 0.015, 0.08, C.line, R - 0.04, 1.85, z).rotation.z = Math.PI / 2;
+    cyl(0.18, 0.18, 0.02, '#e8c860', R - 0.12, 1.75, 0.6).rotation.z = Math.PI / 2;
+
+    // ========== 12. 柔和的光 ==========
+    scene.add(new THREE.HemisphereLight('#fff4d6', '#b5533c', 1.6)); // 天空暖光 + 地面红色反光
+    scene.add(new THREE.AmbientLight('#ffffff', 0.6));
+    const sun = new THREE.DirectionalLight('#fff1c4', 1.2);           // 从窗户照进来的光
+    sun.position.set(-0.6, 2.5, BACK - 2);
+    sun.target.position.set(0.5, 0, 1);
+    scene.add(sun, sun.target);
+    const lamp = new THREE.PointLight('#ffe8b0', 0.8, 8);
+    lamp.position.set(0, 2.6, 0.5);
+    scene.add(lamp);
+
+    // ========== 13. 第一人称：走动和转视角 ==========
+    const player = { x: 0, z: 1.9, yaw: 0, pitch: -0.08, eye: 1.55, r: 0.25 };
+    const keys = {};
+    window.addEventListener('keydown', e => { keys[e.code] = true; });
+    window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+    // 不能穿过的东西（矩形区域：x 最小, x 最大, z 最小, z 最大）
+    const blocks = [
+      [1.3 - 0.7, 1.3 + 0.7, -1.45 - 1.05, -1.45 + 1.05], // 床
+      [-1.62 - 0.35, -1.62 + 0.35, -1.95 - 0.3, -1.95 + 0.3] // 桌子
+    ];
+
+    function blocked(x, z) {
+      const r = player.r;
+      if (x < L + r || x > R - r || z < BACK + r || z > FRONT - r) return true; // 墙
+      for (const [x0, x1, z0, z1] of blocks)
+        if (x > x0 - r && x < x1 + r && z > z0 - r && z < z1 + r) return true;
+      return false;
+    }
+
+    // 拖动转视角（鼠标和触屏通用）
+    let dragId = null, lastX = 0, lastY = 0;
+    const cvs = renderer.domElement;
+    cvs.addEventListener('pointerdown', e => { dragId = e.pointerId; lastX = e.clientX; lastY = e.clientY; hideHint(); });
+    window.addEventListener('pointermove', e => {
+      if (e.pointerId !== dragId) return;
+      player.yaw   += (e.clientX - lastX) * 0.005;
+      player.pitch -= (e.clientY - lastY) * 0.005;
+      player.pitch = Math.max(-1.3, Math.min(1.3, player.pitch));
+      lastX = e.clientX; lastY = e.clientY;
+    });
+    window.addEventListener('pointerup', e => { if (e.pointerId === dragId) dragId = null; });
+    window.addEventListener('pointercancel', e => { if (e.pointerId === dragId) dragId = null; });
+
+    // 手机虚拟摇杆
+    const joy = document.getElementById('joy'), knob = document.getElementById('knob');
+    const joyMove = { x: 0, y: 0 };
+    let joyId = null;
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) joy.style.display = 'block';
+    function setKnob(e) {
+      const rect = joy.getBoundingClientRect();
+      let dx = e.clientX - (rect.left + rect.width / 2);
+      let dy = e.clientY - (rect.top + rect.height / 2);
+      const len = Math.hypot(dx, dy), max = 40;
+      if (len > max) { dx *= max / len; dy *= max / len; }
+      knob.style.transform = `translate(${dx}px, ${dy}px)`;
+      joyMove.x = dx / max; joyMove.y = dy / max;
+    }
+    joy.addEventListener('pointerdown', e => { joyId = e.pointerId; joy.setPointerCapture(joyId); setKnob(e); hideHint(); });
+    joy.addEventListener('pointermove', e => { if (e.pointerId === joyId) setKnob(e); });
+    const joyEnd = e => { if (e.pointerId !== joyId) return; joyId = null; joyMove.x = joyMove.y = 0; knob.style.transform = ''; };
+    joy.addEventListener('pointerup', joyEnd);
+    joy.addEventListener('pointercancel', joyEnd);
+
+    const hint = document.getElementById('hint');
+    let hintHidden = false;
+    function hideHint() { if (!hintHidden) { hintHidden = true; setTimeout(() => hint.style.opacity = 0, 2500); } }
+
+    // ========== 14. 每一帧：移动 + 画画面 ==========
+    const clock = new THREE.Clock();
+    function loop() {
+      const dt = Math.min(clock.getDelta(), 0.05);
+      let fwd = 0, side = 0;
+      if (keys.KeyW || keys.ArrowUp) fwd += 1;
+      if (keys.KeyS || keys.ArrowDown) fwd -= 1;
+      if (keys.KeyD || keys.ArrowRight) side += 1;
+      if (keys.KeyA || keys.ArrowLeft) side -= 1;
+      fwd -= joyMove.y; side += joyMove.x;
+      if (fwd || side) hideHint();
+
+      const speed = 1.6 * dt;
+      const sin = Math.sin(player.yaw), cos = Math.cos(player.yaw);
+      const dx = (side * cos + fwd * sin) * speed;
+      const dz = (side * sin - fwd * cos) * speed;
+      // 分开判断 x 和 z，这样贴着墙也能滑着走
+      if (!blocked(player.x + dx, player.z)) player.x += dx;
+      if (!blocked(player.x, player.z + dz)) player.z += dz;
+
+      camera.position.set(player.x, player.eye, player.z);
+      camera.rotation.set(player.pitch, -player.yaw, 0, 'YXZ');
+      renderer.render(scene, camera);
+      requestAnimationFrame(loop);
+    }
+    loop();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
