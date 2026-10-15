@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# 走进名画 · Walk into Paintings 的网址清单
+Sitemap: https://tiaz369.github.io/walk-into-paintings/sitemap.xml
