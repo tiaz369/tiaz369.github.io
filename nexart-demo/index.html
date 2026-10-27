@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexArt Agent Identity</title>
+<meta name="description" content="Concept demo: verifying the identity, owner and permissions of AI agents with digital signatures.">
+<style>
+  /* ===== 颜色设置（浅色模式） ===== */
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --border: #e1e6ee;
+    --text: #172033;
+    --muted: #5d6b82;
+    --accent: #2f5bea;
+    --accent-soft: #e8eefe;
+    --ok: #16803c;
+    --ok-soft: #e6f6ec;
+    --bad: #c62828;
+    --bad-soft: #fdecec;
+    --warn: #b26a00;
+    --warn-soft: #fff4e0;
+    --card-a: #1e3a8a;
+    --card-b: #2f5bea;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  /* ===== 深色模式（跟随系统设置） ===== */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f141c;
+      --panel: #171e2a;
+      --border: #2a3445;
+      --text: #e7ecf4;
+      --muted: #9aa7bb;
+      --accent: #7c9cff;
+      --accent-soft: #1f2a44;
+      --ok: #4ade80;
+      --ok-soft: #12291c;
+      --bad: #f87171;
+      --bad-soft: #2f1717;
+      --warn: #fbbf24;
+      --warn-soft: #2e2410;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 28px 16px 40px; }
+
+  header h1 { font-size: 1.55rem; line-height: 1.25; margin: 0 0 8px; }
+  header p { color: var(--muted); margin: 0 0 20px; max-width: 680px; }
+
+  /* 顶部场景按钮区 */
+  .scenarios {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 16px; margin-bottom: 22px;
+  }
+  .scenarios .label { font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 10px; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  button {
+    font: inherit; font-size: .9rem; cursor: pointer;
+    border-radius: 8px; padding: 8px 14px;
+    border: 1px solid var(--border); background: var(--panel); color: var(--text);
+  }
+  button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button.primary:hover:not(:disabled) { color: #fff; filter: brightness(1.08); }
+  button.good { border-color: var(--ok); color: var(--ok); }
+  button.danger { border-color: var(--bad); color: var(--bad); }
+  button.danger:hover:not(:disabled) { background: var(--bad-soft); color: var(--bad); border-color: var(--bad); }
+
+  /* 每个步骤区块 */
+  section {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px; margin-bottom: 18px;
+  }
+  section h2 { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; margin: 0 0 4px; }
+  .step {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--accent-soft); color: var(--accent); font-size: .85rem; font-weight: 700; flex: none;
+  }
+  .hint { color: var(--muted); font-size: .9rem; margin: 0 0 16px; }
+
+  .kv { display: grid; grid-template-columns: 170px 1fr; gap: 6px 14px; font-size: .92rem; }
+  .kv dt { color: var(--muted); }
+  .kv dd { margin: 0; word-break: break-all; }
+  .mono { font-family: var(--mono); font-size: .86rem; }
+
+  /* 表单 */
+  .form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+  .field label, .field .flabel { display: block; font-size: .82rem; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+  input[type=text], input[type=number] {
+    width: 100%; font: inherit; padding: 8px 10px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg); color: var(--text);
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+  .checks { display: flex; gap: 16px; flex-wrap: wrap; padding-top: 6px; }
+  .checks label { display: flex; align-items: center; gap: 6px; font-weight: 400; color: var(--text); font-size: .95rem; margin: 0; }
+  .inline-check { display: flex; align-items: center; gap: 8px; font-size: .9rem; color: var(--muted); margin: 10px 0 14px; }
+
+  /* 数字身份证卡片 */
+  .id-card {
+    margin-top: 18px; border-radius: 14px; padding: 18px 20px; color: #fff;
+    background: linear-gradient(135deg, var(--card-a), var(--card-b));
+    box-shadow: 0 6px 20px rgba(30, 58, 138, .25);
+    position: relative; overflow: hidden;
+  }
+  .id-card.revoked, .id-card.expired { background: linear-gradient(135deg, #4b5563, #6b7280); box-shadow: none; }
+  .id-card .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+  .id-card .brand { font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; opacity: .85; }
+  .id-card .name { font-size: 1.3rem; font-weight: 700; margin-top: 2px; word-break: break-word; }
+  .status {
+    font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.18); white-space: nowrap;
+  }
+  .status.active::before { content: "● "; color: #86efac; }
+  .status.bad { background: #c62828; }
+  .id-card .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; font-size: .88rem; }
+  .id-card .grid .full { grid-column: 1 / -1; }
+  .id-card .k { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; opacity: .7; }
+  .id-card .v { word-break: break-all; }
+  .chip { display: inline-block; font-size: .78rem; padding: 2px 9px; border-radius: 999px; background: rgba(255,255,255,.2); margin: 2px 4px 2px 0; }
+  .card-actions { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .empty { color: var(--muted); font-style: italic; font-size: .92rem; }
+
+  /* 传输中的数据包 */
+  .packet { border: 1px dashed var(--border); border-radius: 10px; padding: 14px; margin-top: 14px; background: var(--bg); }
+  .packet h3 { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; }
+  .alert { margin-top: 10px; padding: 8px 12px; border-radius: 8px; font-size: .9rem; }
+  .alert.warn { background: var(--warn-soft); color: var(--warn); }
+
+  /* 验证结果 */
+  .checklist { list-style: none; padding: 0; margin: 14px 0 0; }
+  .checklist li {
+    display: grid; grid-template-columns: 28px 1fr; gap: 4px 8px;
+    padding: 10px 0; border-top: 1px solid var(--border);
+  }
+  .checklist li:first-child { border-top: 0; }
+  .checklist .icon { font-size: 1.1rem; line-height: 1.3; }
+  .checklist .title { font-weight: 600; }
+  .checklist .detail { grid-column: 2; color: var(--muted); font-size: .86rem; word-break: break-word; }
+  .checklist li.pending { opacity: .45; }
+
+  .verdict { margin-top: 16px; border-radius: 12px; padding: 16px 18px; }
+  .verdict .big { font-size: 1.6rem; font-weight: 800; letter-spacing: .04em; }
+  .verdict.ok { background: var(--ok-soft); color: var(--ok); border: 2px solid var(--ok); }
+  .verdict.bad { background: var(--bad-soft); color: var(--bad); border: 2px solid var(--bad); }
+  .verdict p { margin: 4px 0 0; color: var(--text); }
+
+  footer { text-align: center; color: var(--muted); font-size: .85rem; padding: 10px 0 0; }
+
+  .fatal { background: var(--bad-soft); color: var(--bad); padding: 14px; border-radius: 10px; margin-bottom: 18px; }
+
+  /* 手机屏幕：表单改成一列 */
+  @media (max-width: 620px) {
+    header h1 { font-size: 1.3rem; }
+    .form { grid-template-columns: 1fr; }
+    .kv { grid-template-columns: 1fr; gap: 0 0; }
+    .kv dd { margin-bottom: 8px; }
+    .id-card .grid { grid-template-columns: 1fr; }
+    section { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>NexArt — AI Agent Identity Verification (Concept Demo)</h1>
+    <p>As AI agents act on our behalf, others need to know which agent they are dealing with, who it belongs to, and what it is allowed to do.</p>
+  </header>
+
+  <div id="fatal"></div>
+
+  <!-- 一键演示场景 -->
+  <div class="scenarios">
+    <div class="label">One-click scenarios</div>
+    <div class="btn-row">
+      <button class="good" data-scenario="valid">✅ Valid agent</button>
+      <button data-scenario="tampered">Tampered request</button>
+      <button data-scenario="impostor">Impostor agent</button>
+      <button data-scenario="revoked">Revoked agent</button>
+      <button data-scenario="expired">Expired credential</button>
+      <button data-scenario="noperm">No permission</button>
+      <button class="danger" id="revokeTop" disabled>Revoke this agent</button>
+    </div>
+  </div>
+
+  <!-- 区块 1：发证方 -->
+  <section id="s1">
+    <h2><span class="step">1</span> Issuer: NexArt</h2>
+    <p class="hint">NexArt holds a private signing key. Anyone can check NexArt's signatures using its public key.</p>
+    <dl class="kv">
+      <dt>Key type</dt><dd>ECDSA P-256 (Web Crypto API)</dd>
+      <dt>Public key fingerprint</dt><dd class="mono" id="issuerFp">Generating…</dd>
+      <dt>Revocation list</dt><dd id="revList" class="empty">Empty</dd>
+    </dl>
+  </section>
+
+  <!-- 区块 2：注册 agent -->
+  <section id="s2">
+    <h2><span class="step">2</span> Register Agent</h2>
+    <p class="hint">The agent gets its own key pair. NexArt signs a credential that binds the agent's public key to its owner and permissions.</p>
+    <div class="form">
+      <div class="field">
+        <label for="agentName">Agent name</label>
+        <input type="text" id="agentName" value="ShoppingAgent-01">
+      </div>
+      <div class="field">
+        <label for="owner">Owner</label>
+        <input type="text" id="owner" value="Alice">
+      </div>
+      <div class="field">
+        <span class="flabel">Permissions</span>
+        <div class="checks">
+          <label><input type="checkbox" name="perm" value="read" checked> read</label>
+          <label><input type="checkbox" name="perm" value="purchase" checked> purchase</label>
+          <label><input type="checkbox" name="perm" value="payment" checked> payment</label>
+        </div>
+      </div>
+      <div class="field">
+        <label for="validity">Valid for (minutes)</label>
+        <input type="number" id="validity" value="60" min="1" max="10080">
+      </div>
+    </div>
+    <button class="primary" id="issueBtn" disabled>Issue Identity</button>
+    <div id="cardArea"></div>
+  </section>
+
+  <!-- 区块 3：agent 发出请求 -->
+  <section id="s3">
+    <h2><span class="step">3</span> Agent Sends Request</h2>
+    <p class="hint">The agent signs its request with its own private key, then sends the request, the signature and its credential to the verifier.</p>
+    <div class="field">
+      <label for="reqText">Request (format: action: details)</label>
+      <input type="text" id="reqText" value="purchase: 1 book, £12">
+    </div>
+    <label class="inline-check"><input type="checkbox" id="tamperBox"> Simulate an attacker changing the request after it is signed</label>
+    <button class="primary" id="sendBtn" disabled>Sign &amp; Send to Verifier</button>
+    <div id="packetArea"></div>
+  </section>
+
+  <!-- 区块 4：验证方 -->
+  <section id="s4">
+    <h2><span class="step">4</span> Verifier (e.g. an online shop)</h2>
+    <p class="hint">The shop only needs NexArt's public key. It checks the package step by step.</p>
+    <div id="verifyArea"><p class="empty">Waiting for a request…</p></div>
+  </section>
+
+  <footer>Concept demo. UK patent application pending.</footer>
+</div>
+
+<script>
+// =====================================================================
+// 第一部分：加密小工具（全部使用浏览器自带的 Web Crypto API）
+// =====================================================================
+
+const ALGO = { name: 'ECDSA', namedCurve: 'P-256' };  // 密钥类型：椭圆曲线 P-256
+const SIGN = { name: 'ECDSA', hash: 'SHA-256' };      // 签名方式：ECDSA + SHA-256
+const enc = new TextEncoder();                         // 把文字转成字节
+
+// 生成一对新密钥（私钥用来签名，公钥用来验证）
+function newKeyPair() {
+  return crypto.subtle.generateKey(ALGO, true, ['sign', 'verify']);
+}
+
+// 字节 <-> Base64 文本 互相转换（方便把密钥、签名放进凭证里）
+function bufToB64(buf) {
+  let s = '';
+  new Uint8Array(buf).forEach(b => { s += String.fromCharCode(b); });
+  return btoa(s);
+}
+function b64ToBuf(b64) {
+  const s = atob(b64);
+  const out = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
+  return out;
+}
+function bufToHex(buf) {
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// 把公钥导出成文本
+async function exportPub(publicKey) {
+  return bufToB64(await crypto.subtle.exportKey('raw', publicKey));
+}
+// 把文本形式的公钥导入回来，用于验证签名
+function importPub(b64) {
+  return crypto.subtle.importKey('raw', b64ToBuf(b64), ALGO, true, ['verify']);
+}
+
+// 用私钥给一段文字签名，返回签名文本
+async function signText(privateKey, text) {
+  return bufToB64(await crypto.subtle.sign(SIGN, privateKey, enc.encode(text)));
+}
+// 用公钥检查签名是否正确；出任何错误都当作"不通过"
+async function verifyText(publicKey, sigB64, text) {
+  try {
+    return await crypto.subtle.verify(SIGN, publicKey, b64ToBuf(sigB64), enc.encode(text));
+  } catch (e) {
+    return false;
+  }
+}
+
+// 计算 SHA-256 "数字指纹"（任何内容改动一个字，指纹都会完全不同）
+async function sha256Hex(textOrBuf) {
+  const data = typeof textOrBuf === 'string' ? enc.encode(textOrBuf) : textOrBuf;
+  return bufToHex(await crypto.subtle.digest('SHA-256', data));
+}
+
+// 公钥的简短指纹，例如 3F2A:91C0:7B44:E1D8
+async function fingerprint(pubB64) {
+  const hex = (await sha256Hex(b64ToBuf(pubB64))).slice(0, 16).toUpperCase();
+  return hex.match(/.{4}/g).join(':');
+}
+
+// 随机 ID，例如 agt_9f3c1a2b4d5e6f70
+function randomId(prefix) {
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  return prefix + bufToHex(bytes);
+}
+
+// 长字符串只显示开头，方便阅读
+function short(s, n = 20) {
+  return s.length > n ? s.slice(0, n) + '…' : s;
+}
+
+// 防止用户输入的文字被当成网页代码执行
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function timeStr(iso) {
+  return new Date(iso).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const $ = id => document.getElementById(id);
+
+
+// =====================================================================
+// 第二部分：页面内存里的数据（刷新页面就全部清空）
+// =====================================================================
+
+const state = {
+  issuer: null,          // NexArt 的密钥对和指纹
+  agent: null,           // 当前注册的 agent：{ credential, keys }
+  revoked: new Set(),    // NexArt 的吊销名单（存 agent ID）
+  lastPackage: null,     // 最近一次发给验证方的数据包
+  busy: false,           // 演示场景运行中时，暂时锁住按钮
+  verifyRun: 0           // 用来取消旧的验证动画
+};
+
+
+// =====================================================================
+// 第三部分：凭证（数字身份证）
+// =====================================================================
+
+// 凭证中需要被签名的内容。固定字段顺序，保证签名和验证时内容完全一致
+function credentialBody(c) {
+  return JSON.stringify({
+    agentId: c.agentId,
+    name: c.name,
+    owner: c.owner,
+    permissions: c.permissions,
+    issuedAt: c.issuedAt,
+    expiresAt: c.expiresAt,
+    agentPublicKey: c.agentPublicKey,
+    issuer: c.issuer
+  });
+}
+
+// 签发身份：生成 agent 密钥对 -> 填好凭证 -> NexArt 用私钥签名
+// backdate = true 时，把时间往前推，制造一张"已过期"的凭证
+async function issueIdentity({ backdate = false } = {}) {
+  const name = $('agentName').value.trim() || 'Unnamed agent';
+  const owner = $('owner').value.trim() || 'Unknown';
+  const permissions = [...document.querySelectorAll('input[name=perm]:checked')].map(i => i.value);
+  const minutes = Math.max(1, parseInt($('validity').value, 10) || 60);
+
+  const keys = await newKeyPair();
+  const now = Date.now();
+  const issued = backdate ? now - (minutes + 5) * 60000 : now;
+  const expires = issued + minutes * 60000;
+
+  const credential = {
+    agentId: randomId('agt_'),
+    name, owner, permissions,
+    issuedAt: new Date(issued).toISOString(),
+    expiresAt: new Date(expires).toISOString(),
+    agentPublicKey: await exportPub(keys.publicKey),
+    issuer: 'NexArt'
+  };
+  credential.issuerSignature = await signText(state.issuer.keys.privateKey, credentialBody(credential));
+
+  state.agent = { credential, keys };
+  state.lastPackage = null;
+  await renderCard();
+  $('packetArea').innerHTML = '';
+  $('verifyArea').innerHTML = '<p class="empty">Waiting for a request…</p>';
+  updateButtons();
+}
+
+// 冒充者：自己造一对密钥，再用一个"假 NexArt"密钥给自己签一张假凭证
+async function makeImpostor() {
+  const real = state.agent.credential;
+  const fakeIssuer = await newKeyPair();
+  const keys = await newKeyPair();
+  const credential = {
+    ...real,                                 // 抄袭真 agent 的名字、所属人、权限
+    agentPublicKey: await exportPub(keys.publicKey),
+    issuer: 'NexArt'                         // 声称是 NexArt 签发的
+  };
+  credential.issuerSignature = await signText(fakeIssuer.privateKey, credentialBody(credential));
+  return { credential, keys, impostor: true };
+}
+
+// 吊销：把 agent ID 加入 NexArt 的吊销名单
+async function revokeAgent(reverify = true) {
+  if (!state.agent) return;
+  state.revoked.add(state.agent.credential.agentId);
+  renderRevList();
+  await renderCard();
+  updateButtons();
+  // 如果之前已经发过请求，让验证方重新检查一次，立刻看到结果变化
+  if (reverify && state.lastPackage) runVerifier(state.lastPackage);
+}
+
+
+// =====================================================================
+// 第四部分：agent 签名并发送请求
+// =====================================================================
+
+// 请求的"信封"：只包含请求内容的指纹，agent 对这个信封签名
+function envelopeBody(env) {
+  return JSON.stringify({
+    agentId: env.agentId,
+    contentHash: env.contentHash,
+    timestamp: env.timestamp,
+    nonce: env.nonce
+  });
+}
+
+// 模拟攻击者在途中修改内容：把金额乘以 100
+function tamperContent(text) {
+  if (/£\s?\d+/.test(text)) return text.replace(/£\s?(\d+)/, (m, n) => '£' + (Number(n) * 100));
+  return text + ' (x100)';
+}
+
+async function signAndSend({ sender, tamper }) {
+  const content = $('reqText').value.trim() || 'read: catalogue';
+
+  // agent 计算请求内容的指纹，并用自己的私钥签名
+  const envelope = {
+    agentId: sender.credential.agentId,
+    contentHash: await sha256Hex(content),
+    timestamp: new Date().toISOString(),
+    nonce: randomId('')
+  };
+  const signature = await signText(sender.keys.privateKey, envelopeBody(envelope));
+
+  // 发出后，如果勾选了"篡改"，内容在途中被改掉
+  const received = tamper ? tamperContent(content) : content;
+
+  const pkg = { credential: sender.credential, content: received, envelope, signature };
+  state.lastPackage = pkg;
+  renderPacket(sender, content, received, signature);
+  await runVerifier(pkg);
+}
+
+
+// =====================================================================
+// 第五部分：验证方逐项检查
+// =====================================================================
+
+async function verifyPackage(pkg) {
+  const c = pkg.credential;
+  const results = [];
+
+  // a. 凭证是否真由 NexArt 签发：用 NexArt 公钥检查凭证签名
+  const aOk = await verifyText(state.issuer.keys.publicKey, c.issuerSignature, credentialBody(c));
+  results.push({
+    title: 'Credential was issued by NexArt',
+    ok: aOk,
+    detail: aOk ? `Signature matches NexArt's public key (${state.issuer.fp}).`
+                : `Signature does not match NexArt's public key. This credential is forged.`,
+    reason: 'the credential was not issued by NexArt, so this agent cannot prove who it is.'
+  });
+
+  // b. 凭证是否过期
+  const bOk = Date.now() < new Date(c.expiresAt).getTime();
+  results.push({
+    title: 'Credential has not expired',
+    ok: bOk,
+    detail: bOk ? `Valid until ${timeStr(c.expiresAt)}.` : `Expired at ${timeStr(c.expiresAt)}.`,
+    reason: 'the agent\'s credential has expired.'
+  });
+
+  // c. 是否在吊销名单上
+  const cOk = !state.revoked.has(c.agentId);
+  results.push({
+    title: 'Credential has not been revoked',
+    ok: cOk,
+    detail: cOk ? `${c.agentId} is not on NexArt's revocation list.`
+                : `${c.agentId} is on NexArt's revocation list.`,
+    reason: 'NexArt has revoked this agent\'s identity.'
+  });
+
+  // d. 请求是否真由凭证里的这个 agent 签名：用凭证里的 agent 公钥检查
+  let dOk = false;
+  try {
+    const agentPub = await importPub(c.agentPublicKey);
+    dOk = pkg.envelope.agentId === c.agentId &&
+          await verifyText(agentPub, pkg.signature, envelopeBody(pkg.envelope));
+  } catch (e) { dOk = false; }
+  results.push({
+    title: 'Request was signed by this agent',
+    ok: dOk,
+    detail: dOk ? 'Signature matches the agent public key inside the credential.'
+                : 'Signature does not match the agent public key inside the credential.',
+    reason: 'the request was not signed by the agent named in the credential.'
+  });
+
+  // e. 内容是否被篡改：重新计算收到内容的指纹，与 agent 签过名的指纹对比
+  const receivedHash = await sha256Hex(pkg.content);
+  const eOk = receivedHash === pkg.envelope.contentHash;
+  results.push({
+    title: 'Request content has not been changed',
+    ok: eOk,
+    detail: eOk ? 'Fingerprint of the received request matches the one the agent signed.'
+                : 'Fingerprint of the received request does not match the one the agent signed.',
+    reason: 'the request was changed after the agent signed it.'
+  });
+
+  // f. 操作是否在权限范围内：取冒号前面的词作为操作，例如 "purchase"
+  const action = pkg.content.split(':')[0].trim().toLowerCase();
+  const fOk = c.permissions.includes(action);
+  const permList = c.permissions.length ? c.permissions.join(', ') : 'none';
+  results.push({
+    title: 'Action is within the agent\'s permissions',
+    ok: fOk,
+    detail: fOk ? `"${action}" is allowed (permissions: ${permList}).`
+                : `"${action}" is not allowed (permissions: ${permList}).`,
+    reason: `the agent is not allowed to "${action}" (it may only: ${permList}).`
+  });
+
+  return results;
+}
+
+// 逐行显示检查结果（带一点动画，方便评审看清楚）
+async function runVerifier(pkg) {
+  const run = ++state.verifyRun;
+  const results = await verifyPackage(pkg);
+  const c = pkg.credential;
+
+  $('verifyArea').innerHTML = `
+    <div class="packet" style="margin-top:0">
+      <h3>Received package</h3>
+      <dl class="kv">
+        <dt>Claims to be</dt><dd>${esc(c.name)} <span class="mono">(${esc(c.agentId)})</span></dd>
+        <dt>Belongs to</dt><dd>${esc(c.owner)}</dd>
+        <dt>Request</dt><dd class="mono">${esc(pkg.content)}</dd>
+      </dl>
+    </div>
+    <ul class="checklist" id="checklist">
+      ${results.map(r => `
+        <li class="pending">
+          <span class="icon">⏳</span>
+          <span class="title">${esc(r.title)}</span>
+          <span class="detail">Checking…</span>
+        </li>`).join('')}
+    </ul>
+    <div id="verdict"></div>`;
+
+  const items = $('checklist').children;
+  for (let i = 0; i < results.length; i++) {
+    await wait(280);
+    if (run !== state.verifyRun) return;   // 有新的验证开始了，停止旧动画
+    const li = items[i];
+    li.classList.remove('pending');
+    li.querySelector('.icon').textContent = results[i].ok ? '✅' : '❌';
+    li.querySelector('.detail').textContent = results[i].detail;
+  }
+  await wait(250);
+  if (run !== state.verifyRun) return;
+
+  // 总结果：全部通过 = VERIFIED，否则以第一个失败项作为原因
+  const firstFail = results.find(r => !r.ok);
+  const v = $('verdict');
+  if (!firstFail) {
+    const action = pkg.content.split(':')[0].trim().toLowerCase();
+    v.className = 'verdict ok';
+    v.innerHTML = `<div class="big">VERIFIED</div>
+      <p>This request really comes from ${esc(c.name)}, a NexArt-registered agent acting for ${esc(c.owner)}, and it is allowed to ${esc(action)}.</p>`;
+  } else {
+    v.className = 'verdict bad';
+    v.innerHTML = `<div class="big">REJECTED</div>
+      <p>The shop refused the request because ${esc(firstFail.reason)}</p>`;
+  }
+}
+
+
+// =====================================================================
+// 第六部分：在页面上显示内容
+// =====================================================================
+
+function renderRevList() {
+  const el = $('revList');
+  if (!state.revoked.size) {
+    el.className = 'empty';
+    el.textContent = 'Empty';
+  } else {
+    el.className = 'mono';
+    el.textContent = [...state.revoked].join(', ');
+  }
+}
+
+// 显示数字身份证卡片
+async function renderCard() {
+  const area = $('cardArea');
+  if (!state.agent) { area.innerHTML = ''; return; }
+  const c = state.agent.credential;
+  const agentFp = await fingerprint(c.agentPublicKey);
+  const revoked = state.revoked.has(c.agentId);
+  const expired = Date.now() >= new Date(c.expiresAt).getTime();
+
+  let cls = '', statusHtml = '<span class="status active">Active</span>';
+  if (revoked) { cls = 'revoked'; statusHtml = '<span class="status bad">Revoked</span>'; }
+  else if (expired) { cls = 'expired'; statusHtml = '<span class="status bad">Expired</span>'; }
+
+  area.innerHTML = `
+    <div class="id-card ${cls}">
+      <div class="top">
+        <div>
+          <div class="brand">NexArt · Agent Identity Credential</div>
+          <div class="name">${esc(c.name)}</div>
+        </div>
+        ${statusHtml}
+      </div>
+      <div class="grid">
+        <div><div class="k">Agent ID</div><div class="v mono">${esc(c.agentId)}</div></div>
+        <div><div class="k">Owner</div><div class="v">${esc(c.owner)}</div></div>
+        <div class="full"><div class="k">Permissions</div><div class="v">${
+          c.permissions.length ? c.permissions.map(p => `<span class="chip">${esc(p)}</span>`).join('') : '<span class="chip">none</span>'
+        }</div></div>
+        <div><div class="k">Issued</div><div class="v">${timeStr(c.issuedAt)}</div></div>
+        <div><div class="k">Expires</div><div class="v">${timeStr(c.expiresAt)}</div></div>
+        <div><div class="k">Agent public key (fingerprint)</div><div class="v mono">${agentFp}</div></div>
+        <div><div class="k">Issuer</div><div class="v">${esc(c.issuer)}</div></div>
+        <div class="full"><div class="k">NexArt signature</div><div class="v mono">${esc(short(c.issuerSignature, 44))}</div></div>
+      </div>
+    </div>
+    <div class="card-actions">
+      <button class="danger" id="revokeCard" ${revoked || state.busy ? 'disabled' : ''}>Revoke this agent</button>
+    </div>`;
+  $('revokeCard').onclick = () => revokeAgent(true);
+}
+
+// 显示 agent 发出的数据包
+function renderPacket(sender, signed, received, signature) {
+  const c = sender.credential;
+  const who = sender.impostor
+    ? `<span style="color:var(--bad);font-weight:600">Impostor agent</span> pretending to be ${esc(c.name)} (it has no real NexArt credential)`
+    : `${esc(c.name)} <span class="mono">(${esc(c.agentId)})</span>`;
+  const tampered = signed !== received;
+  $('packetArea').innerHTML = `
+    <div class="packet">
+      <h3>Package sent to verifier</h3>
+      <dl class="kv">
+        <dt>Sent by</dt><dd>${who}</dd>
+        <dt>Request signed</dt><dd class="mono">${esc(signed)}</dd>
+        <dt>Agent signature</dt><dd class="mono">${esc(short(signature, 44))}</dd>
+        <dt>Attached</dt><dd>Credential for ${esc(c.name)}</dd>
+      </dl>
+      ${tampered ? `<div class="alert warn">⚠ Changed in transit: the verifier receives <b class="mono">${esc(received)}</b></div>` : ''}
+    </div>`;
+}
+
+// 根据当前状态启用/禁用按钮
+function updateButtons() {
+  const ready = !!state.issuer && !state.busy;
+  $('issueBtn').disabled = !ready;
+  $('sendBtn').disabled = !ready || !state.agent;
+  const canRevoke = ready && state.agent && !state.revoked.has(state.agent.credential.agentId);
+  $('revokeTop').disabled = !canRevoke;
+  const rc = $('revokeCard');
+  if (rc) rc.disabled = !canRevoke;
+  document.querySelectorAll('[data-scenario]').forEach(b => { b.disabled = !ready; });
+}
+
+
+// =====================================================================
+// 第七部分：一键演示场景
+// =====================================================================
+
+function setForm({ perms }) {
+  $('agentName').value = 'ShoppingAgent-01';
+  $('owner').value = 'Alice';
+  $('validity').value = 60;
+  document.querySelectorAll('input[name=perm]').forEach(i => { i.checked = perms.includes(i.value); });
+  $('reqText').value = 'purchase: 1 book, £12';
+}
+
+async function runScenario(kind) {
+  if (state.busy) return;
+  state.busy = true;
+  updateButtons();
+  try {
+    // 1) 填好表单并签发身份
+    setForm({ perms: kind === 'noperm' ? ['read'] : ['read', 'purchase', 'payment'] });
+    $('tamperBox').checked = kind === 'tampered';
+    await issueIdentity({ backdate: kind === 'expired' });
+
+    // 2) 吊销场景：发请求之前先吊销
+    if (kind === 'revoked') await revokeAgent(false);
+
+    // 3) 冒充场景：换成冒充者来发请求
+    const sender = kind === 'impostor' ? await makeImpostor() : state.agent;
+
+    // 4) 签名、发送、验证
+    $('s4').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    await signAndSend({ sender, tamper: kind === 'tampered' });
+  } finally {
+    state.busy = false;
+    updateButtons();
+  }
+}
+
+
+// =====================================================================
+// 第八部分：页面启动
+// =====================================================================
+
+async function init() {
+  // 检查浏览器是否支持 Web Crypto
+  if (!window.crypto || !crypto.subtle) {
+    $('fatal').innerHTML = '<div class="fatal">This browser does not support the Web Crypto API. Please open the page in a recent version of Chrome, Edge, Firefox or Safari.</div>';
+    $('issuerFp').textContent = 'Unavailable';
+    return;
+  }
+
+  // 页面加载时，为 NexArt 生成密钥对
+  const keys = await newKeyPair();
+  const fp = await fingerprint(await exportPub(keys.publicKey));
+  state.issuer = { keys, fp };
+  $('issuerFp').textContent = fp;
+
+  // 绑定按钮
+  $('issueBtn').onclick = async () => {
+    state.busy = true; updateButtons();
+    try { await issueIdentity(); } finally { state.busy = false; updateButtons(); }
+  };
+  $('sendBtn').onclick = async () => {
+    state.busy = true; updateButtons();
+    try {
+      $('s4').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      await signAndSend({ sender: state.agent, tamper: $('tamperBox').checked });
+    } finally { state.busy = false; updateButtons(); }
+  };
+  $('revokeTop').onclick = () => revokeAgent(true);
+  document.querySelectorAll('[data-scenario]').forEach(b => {
+    b.onclick = () => runScenario(b.dataset.scenario);
+  });
+
+  // 每 5 秒刷新一次卡片状态（让凭证到期时卡片自动显示 Expired）
+  setInterval(() => {
+    if (state.agent && !state.busy) {
+      const expired = Date.now() >= new Date(state.agent.credential.expiresAt).getTime();
+      const shown = document.querySelector('.id-card.expired');
+      if (expired && !shown && !state.revoked.has(state.agent.credential.agentId)) renderCard();
+    }
+  }, 5000);
+
+  updateButtons();
+}
+
+init();
+</script>
+</body>
+</html>
