@@ -1,14 +1,11 @@
 /* =========================================================
-   红线 · 缘分卡 — 主程序
+   红线 · 缘分卡 v2 — 主程序
+   设置在 config.js，卡片文字在 cards.js，人格文字在 personas.js
    ========================================================= */
 (function () {
   "use strict";
 
-  /* ---------- 以后要填的设置 · Settings to fill in later ---------- */
-  // 候补名单表单地址（例如 Formspree：https://formspree.io/f/xxxx）。留空 = 暂不提交。
-  const WAITLIST_URL = "";
-  // 结果卡图片底部显示的网址
-  const SITE_URL = "redthread.example";
+  const CARDS = window.CARDS, PERSONAS = window.PERSONAS, QUESTIONS = window.QUESTIONS;
 
   /* ---------- 界面文字 · UI text ---------- */
   const T = {
@@ -17,36 +14,63 @@
       title: "红线 · 缘分卡",
       subtitle: "月老的一根红线，今天为你牵出一句话。",
       start: "系上红线",
-      seeToday: "查看今天的卡片",
+      seeToday: "查看今天的红线",
+      seeDuo: "看看我们的组合",
+      invite: (n) => n + " 给你牵了一根红线，看看你们是什么组合？",
       limited: "羊年限定 · 2027",
+      valentine: (d) => "距情人节还有 " + d + " 天",
+      valentineToday: "今天是情人节 ♡",
       formTitle: "留下你的名字",
       nickname: "昵称（最多 12 字）",
       birthday: "生日",
       month: "月", day: "日",
       status: "你现在的状态",
       st_single: "单身", st_maybe: "暧昧中", st_inlove: "恋爱中", st_healing: "刚结束一段关系",
-      draw: "牵线",
+      next: "下一步",
       privacy: "信息只保存在你的手机上，不会上传。",
       errName: "请填写昵称", errBday: "请选择生日", errStatus: "请选择你现在的状态",
+      back: "上一步",
+      step: (i, n) => "第 " + i + " / " + n + " 题",
       tying: "红线正在系上……",
+      youAre: "你是",
+      personaName: (p) => p.zh.name + "恋人",
+      shine: "你的闪光点",
+      tip: "小提醒",
+      todayCard: "今日缘分卡",
       question: "反思问题",
       action: "今日小行动",
-      sizePost: "帖子 4:5", sizeStory: "Story 9:16",
       save: "保存结果卡",
       saving: "正在生成……",
-      oneADay: "明天再来抽 · 每人每天一张",
-      restart: "重新填写",
+      send: "把红线牵给 TA",
+      payTitle: "解锁 2027 爱情年签 · £3.99",
+      paySub: "12 个月，每月一个主题",
+      locked: "今天的红线已系好，明天 00:00 再来",
+      duoLabel: "双人红线",
+      duoTitle: (a, b) => a + " × " + b + " 的红线",
+      saveDuo: "保存双人卡",
+      duoNote: "组合结果仅供娱乐，真实的关系靠真实的相处。",
+      shareTitle: "红线 · 缘分卡 2027",
+      shareText: (n) => n + " 给你牵了一根红线，看看你们是什么组合？",
+      copied: "链接已复制，发给 TA 吧",
+      copyFail: "复制失败，请手动复制这个链接：",
+      payModalTitle: "即将上线！留下邮箱，首发享 5 折。",
+      payModalDesc: "2027 爱情年签：12 个月，每月一个爱情主题。",
+      payAgree: "我同意接收上线通知",
+      paySubmit: "提交",
+      payThanks: "谢谢！上线时第一时间通知你。",
+      errEmail: "请填写正确的邮箱",
+      errAgree: "请勾选同意接收上线通知",
       wlTitle: "加入 Inner Lab 候补名单",
       wlDesc: "更多关于爱与自我的小实验，即将开放。",
       wlPlaceholder: "你的邮箱",
       wlJoin: "加入",
       wlThanks: "谢谢！我们会第一时间通知你。",
-      wlSoon: "候补名单即将开放，谢谢你的关注！",
       wlError: "提交失败，请稍后再试。",
       disclaimer: "本内容仅供娱乐与自我反思，不构成任何建议。",
       special: "羊年限定",
-      forName: (n) => "赠 · " + n,
+      forName: (n) => "致 " + n,
       brand: "红线 · 缘分卡 2027",
+      duoHeader: "红线 · 双人卡",
       longPress: "长按图片保存，或点击下方按钮下载",
       download: "下载图片",
       close: "关闭"
@@ -56,36 +80,63 @@
       title: "Red Thread · Love Card",
       subtitle: "One red thread, one message for your heart today.",
       start: "Tie the Thread",
-      seeToday: "See today's card",
+      seeToday: "See today's thread",
+      seeDuo: "See what we are together",
+      invite: (n) => n + " sent you a red thread. See what you are together?",
       limited: "Year of the Goat · 2027",
+      valentine: (d) => d + (d === 1 ? " day" : " days") + " until Valentine's Day",
+      valentineToday: "Happy Valentine's Day ♡",
       formTitle: "Tell the thread who you are",
       nickname: "Nickname (up to 12 characters)",
       birthday: "Birthday",
       month: "Month", day: "Day",
       status: "Where are you right now?",
       st_single: "Single", st_maybe: "Something's starting", st_inlove: "In a relationship", st_healing: "Healing from one",
-      draw: "Draw My Card",
+      next: "Next",
       privacy: "Your info stays on your device.",
       errName: "Please enter a nickname", errBday: "Please choose your birthday", errStatus: "Please choose where you are right now",
+      back: "Back",
+      step: (i, n) => "Question " + i + " of " + n,
       tying: "Tying the thread…",
+      youAre: "You are",
+      personaName: (p) => p.en.name,
+      shine: "Your light",
+      tip: "A gentle reminder",
+      todayCard: "Today's card",
       question: "Reflect",
       action: "Today's small step",
-      sizePost: "Post 4:5", sizeStory: "Story 9:16",
       save: "Save my card",
       saving: "Creating…",
-      oneADay: "One card a day · come back tomorrow",
-      restart: "Start over",
+      send: "Send a thread to someone",
+      payTitle: "Unlock your 2027 Love Year · £3.99",
+      paySub: "12 months, one theme each month",
+      locked: "Today's thread is tied. Come back after midnight.",
+      duoLabel: "Two threads",
+      duoTitle: (a, b) => a + " × " + b + "'s Red Thread",
+      saveDuo: "Save our card",
+      duoNote: "Just for fun: real relationships are built by real time together.",
+      shareTitle: "Red Thread · Love Card 2027",
+      shareText: (n) => n + " sent you a red thread. See what you are together?",
+      copied: "Link copied. Send it to them!",
+      copyFail: "Couldn't copy. Please copy this link:",
+      payModalTitle: "Coming soon! Leave your email for 50% off at launch.",
+      payModalDesc: "Your 2027 Love Year: 12 months, one love theme each month.",
+      payAgree: "I agree to receive a launch notification",
+      paySubmit: "Submit",
+      payThanks: "Thank you! We'll let you know at launch.",
+      errEmail: "Please enter a valid email",
+      errAgree: "Please tick the box to receive the notification",
       wlTitle: "Join the Inner Lab waitlist",
       wlDesc: "More small experiments in love and self, coming soon.",
       wlPlaceholder: "Your email",
       wlJoin: "Join",
       wlThanks: "Thank you! We'll let you know first.",
-      wlSoon: "The waitlist opens soon. Thank you for your interest!",
       wlError: "Something went wrong. Please try again later.",
       disclaimer: "For entertainment and self-reflection only.",
       special: "Year of the Goat",
       forName: (n) => "For " + n,
       brand: "Red Thread · Love Card 2027",
+      duoHeader: "Red Thread · Together",
       longPress: "Press and hold the image to save, or tap below to download",
       download: "Download",
       close: "Close"
@@ -95,52 +146,97 @@
   const MONTHS_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
   const REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const VALENTINE = new Date(2027, 1, 14); // 2027-02-14
+  const STYLE_ICON = { moon: "moon", lantern: "lantern", tea: "tea", mountain: "mountain" };
 
   /* ---------- 本地存储（失败也没关系） ---------- */
   const KEY = "redthread.v1";
-  function load() {
-    try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; }
-  }
-  function save(data) {
-    try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) { /* ignore */ }
-  }
+  function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) { /* ignore */ } }
   let store = load();
 
-  /* ---------- 统计占位：以后接入分析工具时在这里发送事件 ---------- */
-  function track(name) {
-    // 例如：window.someAnalytics && someAnalytics.track(name);
-    // events: "start", "complete", "download", "waitlist"
+  /* ---------- 统计事件位置 ----------
+     以后接统计工具时，在 track() 里把事件发出去即可。
+     注意：Cloudflare Web Analytics 目前只统计访问量，不支持自定义事件；
+     如需统计下面这些按钮，可以换用 Plausible / Umami / Google Analytics 等。
+     事件名：
+       "start"            点击「系上红线」
+       "quiz_done"        做完 3 道题（完成体验）
+       "save_card"        保存结果卡
+       "save_duo"         保存双人卡
+       "send_thread"      点击「把红线牵给 TA」
+       "invite_open"      通过双人链接打开网站
+       "pay_click"        点击付费按钮（解锁 2027 爱情年签）
+       "pay_email_submit" 在付费弹窗里提交邮箱
+       "waitlist"         加入 Inner Lab 候补名单                    */
+  function track(name, data) {
+    // 例：window.plausible && window.plausible(name, { props: data });
   }
 
   /* ---------- helpers ---------- */
   const $ = (id) => document.getElementById(id);
   let lang = store.lang || ((navigator.language || "").toLowerCase().startsWith("zh") ? "zh" : "en");
-  let current = null; // { index, status, nickname }
+  let answers = {};
+  let quizStep = 0;
+  let current = null; // 今天的结果
+  let invite = readInvite();
 
+  function pad2(n) { return String(n).padStart(2, "0"); }
   function todayStr() {
     const d = new Date();
-    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
   }
-
   // FNV-1a 哈希：同样的输入永远得到同样的数字
   function hash(str) {
     let h = 0x811c9dc5;
-    for (const ch of str) {
-      h ^= ch.codePointAt(0);
-      h = Math.imul(h, 0x01000193) >>> 0;
-    }
+    for (const ch of str) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; }
     return h >>> 0;
   }
   function pickCard(nickname, month, day) {
-    const key = nickname.trim().toLowerCase() + "|" + month + "-" + day + "|" + todayStr();
-    return hash(key) % window.CARDS.length;
+    return hash(nickname.trim().toLowerCase() + "|" + month + "-" + day + "|" + todayStr()) % CARDS.length;
   }
-
+  function cleanName(s) {
+    return String(s || "").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, 12);
+  }
+  function readInvite() {
+    try {
+      const q = new URLSearchParams(location.search);
+      const from = cleanName(q.get("from"));
+      const p = parseInt(q.get("p"), 10);
+      if (from && p >= 1 && p <= PERSONAS.length) return { from, p: p - 1 };
+    } catch (e) { /* ignore */ }
+    return null;
+  }
+  function siteUrl() {
+    const s = (window.SITE_URL || "").trim();
+    if (s && !/example/.test(s)) return s;
+    return location.href.split(/[?#]/)[0]; // 还没设置时，用当前网址
+  }
+  function inviteLink() {
+    const base = siteUrl();
+    return base + (base.includes("?") ? "&" : "?") +
+      "from=" + encodeURIComponent(current.nickname) + "&p=" + pad2(current.persona + 1);
+  }
+  function hasToday() {
+    const t = store.today;
+    return !!(t && t.date === todayStr() && CARDS[t.index] && PERSONAS[t.persona]);
+  }
   function show(id) {
     document.querySelectorAll(".screen").forEach((s) => s.classList.remove("is-active"));
     $(id).classList.add("is-active");
     window.scrollTo(0, 0);
   }
+  function toast(msg) {
+    const el = $("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => el.classList.remove("show"), 2600);
+  }
+  function msgLines(card, l) {
+    return card[l].message.split("/").map((s) => s.trim()).filter(Boolean);
+  }
+  function msgPlain(card, l) { return card[l].message.replace(/\s*\/\s*/g, l === "en" ? " " : ""); }
 
   /* ---------- 语言 ---------- */
   function applyLang() {
@@ -150,19 +246,38 @@
       const v = t[el.dataset.i18n];
       if (typeof v === "string") el.textContent = v;
     });
-    document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
-      el.placeholder = t[el.dataset.i18nPlaceholder];
-    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => { el.placeholder = t[el.dataset.i18nPlaceholder]; });
     fillBirthday();
+    renderHome();
+    if ($("screen-quiz").classList.contains("is-active")) renderQuiz();
     if (current) renderResult(false);
-    store.lang = lang; save(store);
+    store.lang = lang; save();
+  }
+
+  /* ---------- 首页 ---------- */
+  function renderHome() {
+    const t = T[lang];
+    const done = hasToday();
+    $("btnStart").textContent = done ? (invite ? t.seeDuo : t.seeToday) : t.start;
+
+    const inv = $("inviteLine");
+    if (invite) { inv.textContent = t.invite(invite.from); inv.classList.remove("hidden"); }
+    else inv.classList.add("hidden");
+
+    // 距情人节还有 X 天（过了就隐藏）
+    const now = new Date();
+    const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const days = Math.round((VALENTINE - today0) / 86400000);
+    const v = $("valentine");
+    if (days < 0) v.classList.add("hidden");
+    else { v.textContent = days === 0 ? t.valentineToday : t.valentine(days); v.classList.remove("hidden"); }
   }
 
   /* ---------- 生日下拉 ---------- */
   function fillBirthday() {
     const t = T[lang];
-    const m = $("bMonth"), d = $("bDay");
-    const mv = m.value, dv = d.value;
+    const m = $("bMonth");
+    const mv = m.value, dv = $("bDay").value;
     m.innerHTML = '<option value="">' + t.month + "</option>";
     for (let i = 1; i <= 12; i++) {
       m.insertAdjacentHTML("beforeend", '<option value="' + i + '">' + (lang === "zh" ? i + " 月" : MONTHS_EN[i - 1]) + "</option>");
@@ -181,7 +296,7 @@
     if (keep && parseInt(keep, 10) <= max) d.value = keep;
   }
 
-  /* ---------- 卡面插画（简洁线条图形） ---------- */
+  /* ---------- 插画：图标（没有图片时的占位） ---------- */
   function symbolSVG(name, special) {
     const R = "#B8302A", I = "#2B2522", G = "#C9A66B";
     const s = 'fill="none" stroke-linecap="round" stroke-linejoin="round"';
@@ -193,7 +308,7 @@
       blossom: [0, 72, 144, 216, 288].map((a) => `<ellipse cx="100" cy="72" rx="16" ry="26" fill="${R}" opacity=".85" transform="rotate(${a} 100 100)"/>`).join("") + `<circle cx="100" cy="100" r="9" fill="${G}"/>`,
       knot: `<path d="M40 100 C70 100 80 60 100 75 C120 90 80 125 100 125 C120 125 80 90 100 75 C120 60 130 100 160 100" stroke="${R}" stroke-width="4" ${s}/>`,
       lantern: `<line x1="100" y1="40" x2="100" y2="55" stroke="${I}" stroke-width="3"/><rect x="82" y="55" width="36" height="8" fill="${I}"/><ellipse cx="100" cy="100" rx="40" ry="38" fill="${R}"/><path d="M100 62 V138 M80 66 Q70 100 80 134 M120 66 Q130 100 120 134" stroke="${G}" stroke-width="2" ${s}/><rect x="82" y="137" width="36" height="8" fill="${I}"/><path d="M100 145 V168" stroke="${R}" stroke-width="3" ${s}/>`,
-      mountain: `<path d="M30 145 L80 75 L110 115 L130 90 L170 145Z" fill="none" stroke="${I}" stroke-width="3" ${s}/><circle cx="140" cy="62" r="12" fill="${R}"/><path d="M45 158 H155" stroke="${G}" stroke-width="2.5" ${s}/>`,
+      mountain: `<path d="M30 145 L80 75 L110 115 L130 90 L170 145Z" stroke="${I}" stroke-width="3" ${s}/><circle cx="140" cy="62" r="12" fill="${R}"/><path d="M45 158 H155" stroke="${G}" stroke-width="2.5" ${s}/>`,
       boat: `<path d="M45 120 H155 L138 142 H62Z" fill="${I}"/><path d="M100 120 V55 L140 110 H100" fill="${R}" opacity=".9"/><path d="M35 158 Q60 148 85 158 T135 158 T175 158" stroke="${G}" stroke-width="2.5" ${s}/>`,
       tea: `<path d="M60 100 H140 Q138 150 100 150 Q62 150 60 100Z" fill="${R}"/><path d="M140 108 Q160 110 152 128 Q146 136 136 132" stroke="${R}" stroke-width="4" ${s}/><path d="M85 85 Q78 72 88 62 M110 85 Q103 72 113 60" stroke="${G}" stroke-width="2.5" ${s}/><path d="M55 160 H145" stroke="${I}" stroke-width="3" ${s}/>`,
       mirror: `<circle cx="100" cy="88" r="40" stroke="${I}" stroke-width="3.5" ${s}/><circle cx="100" cy="88" r="31" fill="${R}" opacity=".12"/><path d="M85 72 Q92 64 102 64" stroke="${R}" stroke-width="3" ${s}/><path d="M100 128 V162 M88 162 H112" stroke="${I}" stroke-width="3.5" ${s}/>`,
@@ -204,47 +319,84 @@
       : `<circle cx="100" cy="100" r="90" stroke="${G}" stroke-width="1.5" fill="none" opacity=".8"/>`;
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">${ring}${shapes[name] || ""}</svg>`;
   }
+  function svgURL(svg) { return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg); }
+  function cardImagePath(i) { return "images/card-" + pad2(i + 1) + ".png"; }
 
-  /* ---------- 显示结果 ---------- */
-  function renderResult(flip) {
-    const c = window.CARDS[current.index];
-    const t = T[lang];
-    const txt = c[lang];
-    const other = c[lang === "zh" ? "en" : "zh"];
-    const front = $("cardFront");
-
-    $("cardNo").textContent = "No. " + String(current.index + 1).padStart(2, "0") + " / " + window.CARDS.length;
-    $("cardArt").innerHTML = symbolSVG(c.symbol, c.special);
-    $("cardName").textContent = txt.name;
-    $("cardNameSub").textContent = other.name;
-    front.classList.toggle("special", !!c.special);
-    const oldTag = front.querySelector(".card-tag");
-    if (oldTag) oldTag.remove();
-    if (c.special) front.insertAdjacentHTML("beforeend", '<div class="card-tag">' + t.special + "</div>");
-
-    $("rMessage").textContent = txt.message;
-    $("rStatus").textContent = (window.STATUS_LINES[current.status] || {})[lang] || "";
-    $("rQuestion").textContent = txt.question;
-    $("rAction").textContent = txt.action;
-
-    if (flip) {
-      const card = $("card");
-      card.classList.remove("is-flipped");
-      void card.offsetWidth;
-      setTimeout(() => card.classList.add("is-flipped"), REDUCED ? 0 : 250);
-    }
+  // 网页上的卡面插画：先试图片，失败就用图标
+  function setCardArt(el, i) {
+    const c = CARDS[i];
+    const img = new Image();
+    img.alt = "";
+    img.onload = () => { el.innerHTML = ""; el.appendChild(img); };
+    img.onerror = () => { el.innerHTML = symbolSVG(c.symbol, c.special); };
+    el.innerHTML = symbolSVG(c.symbol, c.special);
+    img.src = cardImagePath(i);
   }
 
-  function goToResult() {
-    show("screen-result");
-    renderResult(true);
+  /* ---------- 情景题 ---------- */
+  function renderQuiz() {
+    const q = QUESTIONS[quizStep];
+    const t = T[lang];
+    $("quizStep").textContent = t.step(quizStep + 1, QUESTIONS.length);
+    [...$("quizDots").children].forEach((d, i) => d.classList.toggle("on", i <= quizStep));
+    $("quizQ").textContent = q[lang];
+    const box = $("quizOptions");
+    box.innerHTML = "";
+    q.options.forEach((o, i) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "quiz-opt" + (answers[q.key] === o.value ? " selected" : "");
+      b.setAttribute("role", "radio");
+      b.setAttribute("aria-checked", answers[q.key] === o.value ? "true" : "false");
+      const letter = document.createElement("b");
+      letter.textContent = "ABCD"[i];
+      const label = document.createElement("span");
+      label.textContent = o[lang];
+      b.append(letter, label);
+      b.addEventListener("click", () => chooseAnswer(q.key, o.value, b));
+      box.appendChild(b);
+    });
+  }
+  let quizBusy = false;
+  function chooseAnswer(key, value, btn) {
+    if (quizBusy) return;
+    quizBusy = true;
+    answers[key] = value;
+    document.querySelectorAll(".quiz-opt").forEach((b) => b.classList.remove("selected"));
+    btn.classList.add("selected");
+    setTimeout(() => {
+      quizBusy = false;
+      if (quizStep < QUESTIONS.length - 1) { quizStep++; renderQuiz(); }
+      else finishQuiz();
+    }, REDUCED ? 80 : 320);
+  }
+  function quizBack() {
+    if (quizStep > 0) { quizStep--; renderQuiz(); }
+    else show("screen-input");
+  }
+  function finishQuiz() {
+    const p = store.profile;
+    const persona = window.personaIndex(answers.style, answers.pace);
+    store.today = {
+      date: todayStr(),
+      index: pickCard(p.nickname, p.month, p.day),
+      persona: persona,
+      want: answers.want,
+      status: p.status,
+      nickname: p.nickname
+    };
+    save();
+    current = Object.assign({}, store.today);
+    track("quiz_done", { persona: persona + 1 });
+    show("screen-tie");
+    setTimeout(goToResult, REDUCED ? 300 : 2000);
   }
 
   /* ---------- 表单 ---------- */
   function onSubmit(e) {
     e.preventDefault();
     const t = T[lang];
-    const nickname = $("nickname").value.trim().slice(0, 12);
+    const nickname = cleanName($("nickname").value);
     const month = $("bMonth").value, day = $("bDay").value;
     const statusEl = document.querySelector('input[name="status"]:checked');
     const err = $("formError");
@@ -252,18 +404,13 @@
     if (!month || !day) { err.textContent = t.errBday; return; }
     if (!statusEl) { err.textContent = t.errStatus; return; }
     err.textContent = "";
-
-    const index = pickCard(nickname, month, day);
-    current = { index, status: statusEl.value, nickname };
     store.profile = { nickname, month, day, status: statusEl.value };
-    store.today = { date: todayStr(), index, status: statusEl.value, nickname };
-    save(store);
-    track("complete");
-
-    show("screen-tie");
-    setTimeout(goToResult, REDUCED ? 300 : 2000);
+    save();
+    answers = {};
+    quizStep = 0;
+    show("screen-quiz");
+    renderQuiz();
   }
-
   function prefill() {
     const p = store.profile;
     if (!p) return;
@@ -274,32 +421,106 @@
     if (r) r.checked = true;
   }
 
-  /* ---------- 生成分享图片 ---------- */
-  function wrapText(ctx, text, maxWidth) {
-    // 中文按字断行，英文按词断行
-    const tokens = text.match(/[　-鿿＀-￯]|[^\s　-鿿＀-￯]+|\s+/g) || [];
-    const lines = [];
-    let line = "";
-    for (const tok of tokens) {
-      const test = line + tok;
-      if (ctx.measureText(test).width > maxWidth && line.trim()) {
-        lines.push(line.trim());
-        line = /^\s+$/.test(tok) ? "" : tok;
-      } else {
-        line = test;
-      }
+  /* ---------- 结果页 ---------- */
+  function goToResult() {
+    show("screen-result");
+    renderResult(true);
+  }
+  function setLines(el, lines) {
+    el.textContent = "";
+    lines.forEach((l, i) => { if (i) el.appendChild(document.createElement("br")); el.appendChild(document.createTextNode(l)); });
+  }
+  function renderResult(flip) {
+    const t = T[lang];
+    const other = lang === "zh" ? "en" : "zh";
+    const c = CARDS[current.index];
+    const p = PERSONAS[current.persona];
+
+    // 1. 人格
+    $("pArt").innerHTML = symbolSVG(STYLE_ICON[p.style]);
+    const label = $("pLabel");
+    label.textContent = "";
+    const small = document.createElement("small");
+    small.textContent = t.youAre + " · No. " + pad2(current.persona + 1);
+    label.append(small, document.createTextNode(t.personaName(p)));
+    $("pDesc").textContent = p[lang].desc;
+    $("pShine").textContent = p[lang].shine;
+    $("pTip").textContent = p[lang].tip;
+    $("pWant").textContent = (window.WANT_LINES[current.want] || {})[lang] || "";
+    $("rStatus").textContent = (window.STATUS_LINES[current.status] || {})[lang] || "";
+
+    // 2. 今日缘分卡
+    const front = $("cardFront");
+    $("cardNo").textContent = "No. " + pad2(current.index + 1) + " / " + CARDS.length;
+    setCardArt($("cardArt"), current.index);
+    $("cardName").textContent = c[lang].name;
+    $("cardNameSub").textContent = c[other].name;
+    front.classList.toggle("special", !!c.special);
+    const oldTag = front.querySelector(".card-tag");
+    if (oldTag) oldTag.remove();
+    if (c.special) front.insertAdjacentHTML("beforeend", '<div class="card-tag">' + t.special + "</div>");
+    setLines($("rMessage"), lang === "zh" ? msgLines(c, "zh") : [msgPlain(c, "en")]);
+    $("rMessageSub").textContent = msgPlain(c, other);
+    $("rQuestion").textContent = c[lang].question;
+    $("rAction").textContent = c[lang].action;
+
+    // 双人卡
+    renderDuo();
+
+    if (flip) {
+      const card = $("card");
+      card.classList.remove("is-flipped");
+      void card.offsetWidth;
+      setTimeout(() => card.classList.add("is-flipped"), REDUCED ? 0 : 250);
     }
-    if (line.trim()) lines.push(line.trim());
-    // 避免标点出现在行首
-    for (let i = 1; i < lines.length; i++) {
-      if (/^[，。、；：！？）」』,.;:!?]/.test(lines[i])) {
-        lines[i - 1] += lines[i][0];
-        lines[i] = lines[i].slice(1);
-      }
-    }
-    return lines.filter(Boolean);
+    startCountdown();
+  }
+  function renderDuo() {
+    const box = $("duo");
+    if (!invite || !current) { box.classList.add("hidden"); return; }
+    const t = T[lang];
+    const a = PERSONAS[invite.p], b = PERSONAS[current.persona];
+    $("duoTitle").textContent = t.duoTitle(invite.from, current.nickname);
+    $("duoArtA").innerHTML = symbolSVG(STYLE_ICON[a.style]);
+    $("duoArtB").innerHTML = symbolSVG(STYLE_ICON[b.style]);
+    $("duoNameA").textContent = invite.from;
+    $("duoNameB").textContent = current.nickname;
+    $("duoPA").textContent = a[lang].name;
+    $("duoPB").textContent = b[lang].name;
+    $("duoLine").textContent = (window.pairLine(a.style, b.style) || {})[lang] || "";
+    box.classList.remove("hidden");
   }
 
+  /* ---------- 倒计时到明天 00:00 ---------- */
+  let cdTimer = null;
+  function startCountdown() {
+    clearInterval(cdTimer);
+    const startDate = todayStr();
+    const tick = () => {
+      const now = new Date();
+      const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      const s = Math.max(0, Math.floor((next - now) / 1000));
+      $("countdown").textContent = pad2(Math.floor(s / 3600)) + ":" + pad2(Math.floor((s % 3600) / 60)) + ":" + pad2(s % 60);
+      if (todayStr() !== startDate) { clearInterval(cdTimer); location.reload(); }
+    };
+    tick();
+    cdTimer = setInterval(tick, 1000);
+  }
+
+  /* ---------- 画图工具 ---------- */
+  const ZH = '"Noto Serif SC", serif', EN = '"Cormorant Garamond", "Noto Serif SC", serif';
+  const INK = "#2B2522", SOFT = "#6E625A", RED = "#B8302A", GOLD = "#C9A66B", PAPER = "#F6F0E6";
+
+  async function ensureFonts(sample) {
+    try {
+      await Promise.all([
+        document.fonts.load('500 60px "Noto Serif SC"', sample),
+        document.fonts.load('400 60px "Noto Serif SC"', sample),
+        document.fonts.load('500 60px "Cormorant Garamond"', sample),
+        document.fonts.load('italic 400 60px "Cormorant Garamond"', sample)
+      ]);
+    } catch (e) { /* 用系统字体也可以 */ }
+  }
   function loadImage(src) {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -308,105 +529,28 @@
       img.src = src;
     });
   }
-
-  async function makeImage(size) {
-    const c = window.CARDS[current.index];
-    const t = T[lang];
-    const txt = c[lang];
-    const other = c[lang === "zh" ? "en" : "zh"];
-    const W = 1080, H = size === "story" ? 1920 : 1350;
-    const ZH = '"Noto Serif SC", serif', EN = '"Cormorant Garamond", "Noto Serif SC", serif';
-    const mainFont = lang === "zh" ? ZH : EN;
-
-    // 确保字体已加载
-    try {
-      const sample = txt.name + other.name + txt.message + t.brand + t.forName(current.nickname);
-      await Promise.all([
-        document.fonts.load('500 60px "Noto Serif SC"', sample),
-        document.fonts.load('400 60px "Noto Serif SC"', sample),
-        document.fonts.load('500 60px "Cormorant Garamond"', sample),
-        document.fonts.load('italic 400 60px "Cormorant Garamond"', sample)
-      ]);
-    } catch (e) { /* 用系统字体也可以 */ }
-
-    const canvas = $("shareCanvas");
-    canvas.width = W; canvas.height = H;
-    const ctx = canvas.getContext("2d");
-
-    // 背景 + 纸纹
-    ctx.fillStyle = "#F6F0E6";
-    ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = "rgba(43,37,34,0.035)";
-    for (let y = 0; y < H; y += 9) for (let x = (y / 9) % 2 ? 4 : 0; x < W; x += 9) ctx.fillRect(x, y, 1.5, 1.5);
-
-    // 金边
-    const gold = "#C9A66B";
-    ctx.strokeStyle = gold;
-    ctx.lineWidth = c.special ? 5 : 2.5;
-    roundRect(ctx, 48, 48, W - 96, H - 96, 36); ctx.stroke();
-    ctx.lineWidth = c.special ? 2.5 : 1.2;
-    roundRect(ctx, 66, 66, W - 132, H - 132, 26); ctx.stroke();
-
-    // 排版：先算总高度，再上下居中
-    ctx.textAlign = "center";
-    ctx.textBaseline = "alphabetic";
-    const maxW = W - 260;
-    const msgSize = lang === "zh" ? 54 : 64;
-    const msgLH = lang === "zh" ? 92 : 80;
-    ctx.font = (lang === "zh" ? "500 " : "500 ") + msgSize + "px " + mainFont;
-    const msgLines = wrapText(ctx, txt.message, maxW);
-    let artSize = size === "story" ? 420 : 340;
-
-    const blocks = [
-      { h: 40, draw: (y) => { ctx.font = "400 30px " + ZH; ctx.fillStyle = gold; letterSpaced(ctx, "No. " + String(current.index + 1).padStart(2, "0") + " / " + window.CARDS.length, W / 2, y + 32, 8); } },
-      { h: 30 },
-      { h: artSize, art: true },
-      { h: 40 },
-      { h: 100, draw: (y) => {
-          ctx.fillStyle = "#2B2522";
-          if (lang === "zh") { ctx.font = "500 88px " + ZH; letterSpaced(ctx, txt.name, W / 2, y + 86, 18); }
-          else { ctx.font = "500 84px " + EN; ctx.fillText(txt.name, W / 2, y + 80); }
-        } },
-      { h: 56, draw: (y) => { ctx.fillStyle = "#6E625A"; ctx.font = lang === "zh" ? "italic 400 44px " + EN : "400 38px " + ZH; ctx.fillText(other.name + (c.special ? "  ·  " + t.special : ""), W / 2, y + 44); } },
-      { h: 50 },
-      { h: 40, draw: (y) => drawThread(ctx, W / 2, y + 20) },
-      { h: 50 },
-      { h: msgLines.length * msgLH, draw: (y) => {
-          ctx.fillStyle = "#2B2522";
-          ctx.font = "500 " + msgSize + "px " + mainFont;
-          msgLines.forEach((l, i) => ctx.fillText(l, W / 2, y + msgSize + i * msgLH));
-        } },
-      { h: 60 },
-      { h: 50, draw: (y) => { ctx.fillStyle = "#B8302A"; ctx.font = (lang === "zh" ? "400 40px " : "italic 400 46px ") + mainFont; ctx.fillText(t.forName(current.nickname), W / 2, y + 42); } }
-    ];
-    // 内容区：顶部 110 到底部品牌文字上方，放不下就缩小插画
-    const top = 110, bottom = H - 230;
-    let total = blocks.reduce((a, b) => a + b.h, 0);
-    if (total > bottom - top) {
-      const artBlock = blocks.find((b) => b.art);
-      const shrink = Math.min(artSize - 180, total - (bottom - top));
-      artSize -= shrink; artBlock.h = artSize; total -= shrink;
+  // 中文按字断行，英文按词断行
+  function wrapText(ctx, text, maxWidth) {
+    const tokens = text.match(/[　-鿿＀-￯]|[^\s　-鿿＀-￯]+|\s+/g) || [];
+    const lines = [];
+    let line = "";
+    for (const tok of tokens) {
+      const test = line + tok;
+      if (ctx.measureText(test).width > maxWidth && line.trim()) {
+        lines.push(line.trim());
+        line = /^\s+$/.test(tok) ? "" : tok;
+      } else line = test;
     }
-    let y = Math.max(top, top + (bottom - top - total) / 2);
-
-    const artImg = await loadImage("data:image/svg+xml;charset=utf-8," + encodeURIComponent(symbolSVG(c.symbol, c.special))).catch(() => null);
-    for (const b of blocks) {
-      if (b.art && artImg) ctx.drawImage(artImg, (W - artSize) / 2, y, artSize, artSize);
-      if (b.draw) b.draw(y);
-      y += b.h;
+    if (line.trim()) lines.push(line.trim());
+    for (let i = 1; i < lines.length; i++) { // 标点不放行首
+      if (/^[，。、；：！？）」』,.;:!?]/.test(lines[i])) { lines[i - 1] += lines[i][0]; lines[i] = lines[i].slice(1); }
     }
-
-    // 底部：品牌 + 网址
-    ctx.fillStyle = "#2B2522";
-    ctx.font = (lang === "zh" ? "500 38px " : "500 42px ") + mainFont;
-    ctx.fillText(t.brand, W / 2, H - 150);
-    ctx.fillStyle = "#6E625A";
-    ctx.font = "400 32px " + EN;
-    ctx.fillText(SITE_URL, W / 2, H - 104);
-
-    return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+    return lines.filter(Boolean);
   }
-
+  // 中文寄语：按 / 分行，单行太长时再自动断
+  function zhLines(ctx, card, maxWidth) {
+    return msgLines(card, "zh").flatMap((l) => (ctx.measureText(l).width > maxWidth ? wrapText(ctx, l, maxWidth) : [l]));
+  }
   function roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
@@ -416,49 +560,289 @@
     ctx.arcTo(x, y, x + w, y, r);
     ctx.closePath();
   }
-  function letterSpaced(ctx, text, cx, y, spacing) {
+  function letterSpaced(ctx, text, x, y, spacing, align) {
     const chars = [...text];
     const widths = chars.map((ch) => ctx.measureText(ch).width);
     const total = widths.reduce((a, b) => a + b, 0) + spacing * (chars.length - 1);
-    let x = cx - total / 2;
-    const align = ctx.textAlign;
+    let cx = align === "left" ? x : x - total / 2;
+    const old = ctx.textAlign;
     ctx.textAlign = "left";
-    chars.forEach((ch, i) => { ctx.fillText(ch, x, y); x += widths[i] + spacing; });
-    ctx.textAlign = align;
+    chars.forEach((ch, i) => { ctx.fillText(ch, cx, y); cx += widths[i] + spacing; });
+    ctx.textAlign = old;
+    return total;
   }
-  function drawThread(ctx, cx, cy) {
-    ctx.strokeStyle = "#B8302A"; ctx.lineWidth = 4; ctx.lineCap = "round";
+  function drawPaper(ctx, W, H, special) {
+    ctx.fillStyle = PAPER;
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "rgba(43,37,34,0.035)";
+    for (let y = 0; y < H; y += 9) for (let x = (y / 9) % 2 ? 4 : 0; x < W; x += 9) ctx.fillRect(x, y, 1.5, 1.5);
+    ctx.strokeStyle = GOLD;
+    ctx.lineWidth = special ? 5 : 2.5;
+    roundRect(ctx, 48, 48, W - 96, H - 96, 36); ctx.stroke();
+    ctx.lineWidth = special ? 2.5 : 1.2;
+    roundRect(ctx, 66, 66, W - 132, H - 132, 26); ctx.stroke();
+  }
+  // 红色方形印章：竖排“丁未”，下方“羊年 2027”
+  function drawSeal(ctx, x, y, size) {
+    ctx.fillStyle = RED;
+    roundRect(ctx, x, y, size, size, 6); ctx.fill();
+    ctx.strokeStyle = "rgba(251,247,240,.55)"; ctx.lineWidth = 1.5;
+    roundRect(ctx, x + 6, y + 6, size - 12, size - 12, 3); ctx.stroke();
+    ctx.fillStyle = "#FBF7F0";
+    ctx.textAlign = "center";
+    ctx.font = "600 " + Math.round(size * 0.36) + "px " + ZH;
+    ctx.fillText("丁", x + size / 2, y + size * 0.45);
+    ctx.fillText("未", x + size / 2, y + size * 0.85);
+    ctx.fillStyle = SOFT;
+    ctx.font = "400 22px " + ZH;
+    ctx.fillText("羊年 2027", x + size / 2, y + size + 32);
+  }
+  function drawQR(ctx, text, x, y, size) {
+    if (typeof window.qrcode !== "function") return;
+    const qr = window.qrcode(0, "M");
+    qr.addData(text);
+    qr.make();
+    const n = qr.getModuleCount();
+    ctx.fillStyle = "#FFFDF8";
+    roundRect(ctx, x, y, size, size, 8); ctx.fill();
+    const quiet = 2;
+    const cell = size / (n + quiet * 2);
+    ctx.fillStyle = INK;
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        if (qr.isDark(r, c)) ctx.fillRect(x + (c + quiet) * cell, y + (r + quiet) * cell, cell + 0.4, cell + 0.4);
+      }
+    }
+  }
+  function drawFooter(ctx, W, H, t) {
+    const qrSize = 132;
+    drawQR(ctx, siteUrl(), W - 100 - qrSize, H - 100 - qrSize, qrSize);
+    ctx.textAlign = "left";
+    ctx.fillStyle = "rgba(110,98,90,.8)";
+    ctx.font = (lang === "zh" ? "400 26px " + ZH : "500 30px " + EN);
+    ctx.fillText(t.brand, 108, H - 112);
+  }
+  function knot(ctx, x, y) {
     ctx.beginPath();
-    ctx.moveTo(cx - 220, cy);
-    ctx.bezierCurveTo(cx - 140, cy - 26, cx - 70, cy + 26, cx - 16, cy);
-    ctx.moveTo(cx + 16, cy);
-    ctx.bezierCurveTo(cx + 70, cy - 26, cx + 140, cy + 26, cx + 220, cy);
+    ctx.ellipse(x, y, 13, 9, -0.3, 0, Math.PI * 2);
     ctx.stroke();
     ctx.beginPath();
-    ctx.ellipse(cx, cy, 16, 11, 0, 0, Math.PI * 2);
+    ctx.moveTo(x - 6, y + 7); ctx.quadraticCurveTo(x - 14, y + 26, x - 4, y + 34);
+    ctx.moveTo(x + 6, y + 7); ctx.quadraticCurveTo(x + 16, y + 22, x + 12, y + 32);
     ctx.stroke();
+  }
+  function toBlob(canvas) { return new Promise((resolve) => canvas.toBlob(resolve, "image/png")); }
+
+  /* ---------- 结果卡图片 1080×1350 ---------- */
+  async function makeCardImage() {
+    const t = T[lang];
+    const other = lang === "zh" ? "en" : "zh";
+    const c = CARDS[current.index];
+    const p = PERSONAS[current.persona];
+    const W = 1080, H = 1350;
+    const mainFont = lang === "zh" ? ZH : EN;
+    await ensureFonts(c.zh.name + c.en.name + c.zh.message + c.en.message + p.zh.name + p.en.name + t.brand + t.forName(current.nickname) + "丁未羊年致");
+
+    const canvas = $("shareCanvas");
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    drawPaper(ctx, W, H, c.special);
+    ctx.textBaseline = "alphabetic";
+
+    // 1. 左上编号
+    ctx.textAlign = "left";
+    ctx.fillStyle = GOLD;
+    ctx.font = "400 28px " + ZH;
+    letterSpaced(ctx, "No. " + pad2(current.index + 1) + " / " + CARDS.length, 108, 136, 2, "left");
+
+    // 2. 右上印章
+    drawSeal(ctx, W - 100 - 84, 92, 84);
+
+    // 先量好下方文字的高度，再决定插画大小
+    const maxW = 820;
+    ctx.font = (lang === "zh" ? "500 46px " + ZH : "500 50px " + EN);
+    const mainLines = lang === "zh" ? zhLines(ctx, c, maxW) : wrapText(ctx, msgPlain(c, "en"), maxW);
+    const mainLH = lang === "zh" ? 66 : 60;
+    ctx.font = (lang === "zh" ? "italic 400 30px " + EN : "400 26px " + ZH);
+    const subLines = wrapText(ctx, msgPlain(c, other), maxW);
+    const subLH = 40;
+
+    const NAME_BASE_MAX = 1100;         // “致 xxx” 的基线不能低于这里（下面是二维码）
+    const below = 44 + 72 + 46 + 22 + mainLines.length * mainLH + 4 + subLines.length * subLH + 30 + 58;
+    const artTop = 168;
+    const art = Math.max(360, Math.min(640, NAME_BASE_MAX - artTop - below));
+    const artX = (W - art) / 2;
+
+    // 3. 插画（图片优先，没有就用图标）
+    let artImg = await loadImage(cardImagePath(current.index)).catch(() => null);
+    if (artImg) {
+      ctx.save();
+      roundRect(ctx, artX, artTop, art, art, 18); ctx.clip();
+      ctx.drawImage(artImg, artX, artTop, art, art);
+      ctx.restore();
+      ctx.strokeStyle = "rgba(201,166,107,.6)"; ctx.lineWidth = 1.5;
+      roundRect(ctx, artX, artTop, art, art, 18); ctx.stroke();
+    } else {
+      artImg = await loadImage(svgURL(symbolSVG(c.symbol, c.special))).catch(() => null);
+      if (artImg) { const s = art * 0.82; ctx.drawImage(artImg, (W - s) / 2, artTop + (art - s) / 2, s, s); }
+    }
+
+    let y = artTop + art + 44;
+    const threadUnderArt = artTop + art + 22;
+
+    // 5. 卡名：主语言大字 + 另一种语言小字，同一行
+    ctx.textAlign = "left";
+    const big = lang === "zh" ? "500 56px " + ZH : "500 58px " + EN;
+    const sm = lang === "zh" ? "italic 400 36px " + EN : "400 32px " + ZH;
+    ctx.font = big; const bw = ctx.measureText(c[lang].name).width + (lang === "zh" ? 10 * ([...c.zh.name].length - 1) : 0);
+    ctx.font = sm; const sw = ctx.measureText(c[other].name).width;
+    const nx = (W - (bw + 22 + sw)) / 2;
+    ctx.fillStyle = INK; ctx.font = big;
+    if (lang === "zh") letterSpaced(ctx, c.zh.name, nx, y + 56, 10, "left"); else ctx.fillText(c.en.name, nx, y + 56);
+    ctx.fillStyle = SOFT; ctx.font = sm; ctx.fillText(c[other].name, nx + bw + 22, y + 56);
+    y += 72;
+
+    // 6. 人格标签（金色小字）
+    ctx.textAlign = "center";
+    ctx.fillStyle = GOLD;
+    ctx.font = (lang === "zh" ? "500 28px " + ZH : "500 32px " + EN);
+    const tag = lang === "zh" ? p.zh.name + "恋人 · " + p.en.name : p.en.name + " · " + p.zh.name + "恋人";
+    ctx.fillText(tag + (c.special ? "  ·  " + t.special : ""), W / 2, y + 32);
+    y += 46 + 22;
+
+    // 7. 寄语 + 另一语言小字
+    ctx.fillStyle = INK;
+    ctx.font = (lang === "zh" ? "500 46px " + ZH : "500 50px " + EN);
+    mainLines.forEach((l, i) => ctx.fillText(l, W / 2, y + 46 + i * mainLH));
+    y += mainLines.length * mainLH + 4;
+    ctx.fillStyle = SOFT;
+    ctx.font = (lang === "zh" ? "italic 400 30px " + EN : "400 26px " + ZH);
+    subLines.forEach((l, i) => ctx.fillText(l, W / 2, y + 30 + i * subLH));
+    y += subLines.length * subLH + 30;
+
+    // 8. 致 名字（朱砂红，第二醒目）
+    const nameText = t.forName(current.nickname);
+    ctx.fillStyle = RED;
+    ctx.font = (lang === "zh" ? "500 52px " + ZH : "italic 500 60px " + EN);
+    const nameBase = Math.min(y + 50, NAME_BASE_MAX);
+    ctx.fillText(nameText, W / 2, nameBase);
+    const nameRight = W / 2 + ctx.measureText(nameText).width / 2;
+
+    // 4. 红线：从左边缘出发 → 绕过插画下方 → 沿右侧弯下来 → 在名字旁打结
+    const knotX = Math.min(nameRight + 34, W - 120), knotY = nameBase - 18;
+    const rightX = W - 92;
+    ctx.strokeStyle = RED; ctx.lineWidth = 4; ctx.lineCap = "round"; ctx.lineJoin = "round";
+    ctx.beginPath();
+    ctx.moveTo(48, artTop + art * 0.32);
+    ctx.bezierCurveTo(150, artTop + art * 0.55, 150, threadUnderArt, W / 2 - 120, threadUnderArt);
+    ctx.bezierCurveTo(W / 2 + 200, threadUnderArt, rightX, threadUnderArt - 20, rightX, threadUnderArt + 120);
+    ctx.lineTo(rightX, knotY - 110);
+    ctx.bezierCurveTo(rightX, knotY - 30, knotX + 70, knotY, knotX + 12, knotY);
+    ctx.stroke();
+    knot(ctx, knotX, knotY);
+
+    // 9. 底部：品牌 + 二维码
+    drawFooter(ctx, W, H, t);
+    return toBlob(canvas);
   }
 
-  async function onSave() {
-    const btn = $("btnSave");
+  /* ---------- 双人卡图片 1080×1350 ---------- */
+  async function makeDuoImage() {
+    const t = T[lang];
+    const other = lang === "zh" ? "en" : "zh";
+    const a = PERSONAS[invite.p], b = PERSONAS[current.persona];
+    const line = window.pairLine(a.style, b.style) || { zh: "", en: "" };
+    const W = 1080, H = 1350;
+    const title = t.duoTitle(invite.from, current.nickname);
+    await ensureFonts(title + a.zh.name + b.zh.name + a.en.name + b.en.name + line.zh + line.en + t.brand + t.duoHeader + t.duoNote + "丁未羊年恋人");
+
+    const canvas = $("shareCanvas");
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    drawPaper(ctx, W, H, false);
+    drawSeal(ctx, W - 100 - 84, 92, 84);
+
+    ctx.textAlign = "left"; ctx.fillStyle = GOLD;
+    ctx.font = (lang === "zh" ? "400 28px " + ZH : "500 32px " + EN);
+    letterSpaced(ctx, t.duoHeader, 108, 136, lang === "zh" ? 4 : 1, "left");
+
+    // 标题
+    ctx.textAlign = "center"; ctx.fillStyle = RED;
+    ctx.font = (lang === "zh" ? "500 58px " + ZH : "500 64px " + EN);
+    const tl = wrapText(ctx, title, 820);
+    tl.forEach((l, i) => ctx.fillText(l, W / 2, 300 + i * 74));
+    let y = 300 + (tl.length - 1) * 74 + 70;
+
+    // 两个人格
+    const icon = 230, cxA = W / 2 - 230, cxB = W / 2 + 230;
+    const [ia, ib] = await Promise.all([
+      loadImage(svgURL(symbolSVG(STYLE_ICON[a.style]))).catch(() => null),
+      loadImage(svgURL(symbolSVG(STYLE_ICON[b.style]))).catch(() => null)
+    ]);
+    if (ia) ctx.drawImage(ia, cxA - icon / 2, y, icon, icon);
+    if (ib) ctx.drawImage(ib, cxB - icon / 2, y, icon, icon);
+    // 红线连接两人，中间打结
+    const ty = y + icon / 2;
+    ctx.strokeStyle = RED; ctx.lineWidth = 4; ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(cxA + icon / 2 + 6, ty);
+    ctx.bezierCurveTo(W / 2 - 60, ty - 40, W / 2 - 40, ty + 30, W / 2 - 12, ty);
+    ctx.moveTo(W / 2 + 12, ty);
+    ctx.bezierCurveTo(W / 2 + 40, ty - 30, W / 2 + 60, ty + 40, cxB - icon / 2 - 6, ty);
+    ctx.stroke();
+    knot(ctx, W / 2, ty);
+    y += icon + 60;
+
+    [[cxA, invite.from, a], [cxB, current.nickname, b]].forEach(([cx, name, p]) => {
+      ctx.fillStyle = INK;
+      ctx.font = (lang === "zh" ? "500 40px " + ZH : "500 44px " + EN);
+      ctx.fillText(name, cx, y);
+      ctx.fillStyle = GOLD;
+      ctx.font = (lang === "zh" ? "500 32px " + ZH : "500 34px " + EN);
+      ctx.fillText(lang === "zh" ? p.zh.name + "恋人" : p.en.name, cx, y + 50);
+      ctx.fillStyle = SOFT;
+      ctx.font = (lang === "zh" ? "italic 400 28px " + EN : "400 24px " + ZH);
+      ctx.fillText(lang === "zh" ? p.en.name : p.zh.name + "恋人", cx, y + 90);
+    });
+    y += 180;
+
+    // 组合寄语
+    ctx.fillStyle = INK;
+    ctx.font = (lang === "zh" ? "500 50px " + ZH : "500 54px " + EN);
+    const ml = wrapText(ctx, line[lang], 840);
+    ml.forEach((l, i) => ctx.fillText(l, W / 2, y + i * 70));
+    y += (ml.length - 1) * 70 + 54;
+    ctx.fillStyle = SOFT;
+    ctx.font = (lang === "zh" ? "italic 400 32px " + EN : "400 28px " + ZH);
+    wrapText(ctx, line[other], 840).forEach((l, i) => ctx.fillText(l, W / 2, y + i * 42));
+
+    // 声明
+    ctx.fillStyle = "rgba(110,98,90,.85)";
+    ctx.font = (lang === "zh" ? "400 24px " + ZH : "italic 400 28px " + EN);
+    wrapText(ctx, t.duoNote, 600).forEach((l, i) => ctx.fillText(l, W / 2 - 60, H - 250 + i * 34));
+
+    drawFooter(ctx, W, H, t);
+    return toBlob(canvas);
+  }
+
+  /* ---------- 保存 / 下载 ---------- */
+  async function saveImage(btn, maker, labelKey, eventName) {
     const t = T[lang];
     btn.disabled = true; btn.textContent = t.saving;
     try {
-      const size = document.querySelector('input[name="size"]:checked').value;
-      const blob = await makeImage(size);
+      const blob = await maker();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url; a.download = "red-thread-card.png";
       document.body.appendChild(a); a.click(); a.remove();
       showPreview(url);
-      track("download");
+      track(eventName);
     } catch (e) {
       console.error(e);
     } finally {
-      btn.disabled = false; btn.textContent = t.save;
+      btn.disabled = false; btn.textContent = T[lang][labelKey];
     }
   }
-
   // 预览层：微信等内置浏览器不能直接下载时，可长按图片保存
   function showPreview(url) {
     const t = T[lang];
@@ -475,19 +859,72 @@
     document.body.appendChild(wrap);
   }
 
-  /* ---------- 候补名单 ---------- */
+  /* ---------- 把红线牵给 TA ---------- */
+  async function onSend() {
+    const t = T[lang];
+    const url = inviteLink();
+    track("send_thread");
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: t.shareTitle, text: t.shareText(current.nickname), url });
+        return;
+      } catch (e) {
+        if (e && e.name === "AbortError") return; // 用户自己取消
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast(t.copied);
+    } catch (e) {
+      window.prompt(t.copyFail, url);
+    }
+  }
+
+  /* ---------- 付费意愿测试弹窗 ---------- */
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  function openPay() {
+    track("pay_click");
+    $("payError").textContent = "";
+    $("payModal").classList.remove("hidden");
+    setTimeout(() => $("payEmail").focus(), 50);
+  }
+  function closePay() { $("payModal").classList.add("hidden"); }
+  async function postEmail(endpoint, data) {
+    const fd = new FormData();
+    Object.keys(data).forEach((k) => fd.append(k, data[k]));
+    const res = await fetch(endpoint, { method: "POST", body: fd, headers: { Accept: "application/json" } });
+    if (!res.ok && res.type !== "opaque") throw new Error("HTTP " + res.status);
+  }
+  async function onPaySubmit(e) {
+    e.preventDefault();
+    const t = T[lang];
+    const email = $("payEmail").value.trim();
+    const err = $("payError");
+    if (!EMAIL_RE.test(email)) { err.textContent = t.errEmail; $("payEmail").focus(); return; }
+    if (!$("payAgree").checked) { err.textContent = t.errAgree; return; }
+    err.textContent = "";
+    try {
+      if (window.FORM_URL) await postEmail(window.FORM_URL, { email, lang, source: "love-year-2027" });
+      else console.info("[红线] FORM_URL 还没设置，邮箱没有提交：", email);
+      track("pay_email_submit");
+      closePay();
+      $("payEmail").value = ""; $("payAgree").checked = false;
+      toast(t.payThanks);
+    } catch (ex) {
+      err.textContent = t.wlError;
+    }
+  }
+
+  /* ---------- Inner Lab 候补名单 ---------- */
   async function onWaitlist(e) {
     e.preventDefault();
     const t = T[lang];
     const msg = $("wlMsg");
     const email = $("wlEmail").value.trim();
-    if (!$("wlEmail").checkValidity() || !email) { $("wlEmail").reportValidity(); return; }
-    if (!WAITLIST_URL) { msg.textContent = t.wlSoon; return; }
+    if (!EMAIL_RE.test(email)) { msg.textContent = t.errEmail; return; }
     try {
-      const fd = new FormData();
-      fd.append("email", email);
-      fd.append("lang", lang);
-      await fetch(WAITLIST_URL, { method: "POST", body: fd, headers: { Accept: "application/json" } });
+      if (window.WAITLIST_URL) await postEmail(window.WAITLIST_URL, { email, lang, source: "inner-lab" });
+      else console.info("[红线] WAITLIST_URL 还没设置，邮箱没有提交：", email);
       msg.textContent = t.wlThanks;
       $("wlEmail").value = "";
       track("waitlist");
@@ -500,22 +937,25 @@
   function init() {
     applyLang();
     prefill();
-
-    const today = store.today;
-    if (today && today.date === todayStr() && typeof today.index === "number" && window.CARDS[today.index]) {
-      $("btnSeeToday").classList.remove("hidden");
-    }
+    if (invite) track("invite_open", { p: invite.p + 1 });
 
     $("langToggle").addEventListener("click", () => { lang = lang === "zh" ? "en" : "zh"; applyLang(); });
-    $("btnStart").addEventListener("click", () => { track("start"); show("screen-input"); });
-    $("btnSeeToday").addEventListener("click", () => {
-      current = { index: store.today.index, status: store.today.status, nickname: store.today.nickname };
-      goToResult();
+    $("btnStart").addEventListener("click", () => {
+      if (hasToday()) { current = Object.assign({}, store.today); goToResult(); return; }
+      track("start");
+      show("screen-input");
     });
     $("bMonth").addEventListener("change", () => fillDays($("bDay").value));
     $("inputForm").addEventListener("submit", onSubmit);
-    $("btnSave").addEventListener("click", onSave);
-    $("btnRestart").addEventListener("click", () => show("screen-input"));
+    $("quizBack").addEventListener("click", quizBack);
+    $("btnSave").addEventListener("click", () => saveImage($("btnSave"), makeCardImage, "save", "save_card"));
+    $("btnSaveDuo").addEventListener("click", () => saveImage($("btnSaveDuo"), makeDuoImage, "saveDuo", "save_duo"));
+    $("btnSend").addEventListener("click", onSend);
+    $("btnPay").addEventListener("click", openPay);
+    $("payClose").addEventListener("click", closePay);
+    $("payModal").addEventListener("click", (e) => { if (e.target === $("payModal")) closePay(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePay(); });
+    $("payForm").addEventListener("submit", onPaySubmit);
     $("waitlistForm").addEventListener("submit", onWaitlist);
   }
 

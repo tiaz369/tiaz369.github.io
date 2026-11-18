@@ -36,6 +36,7 @@
     <!-- 屏 1 · 首页 -->
     <section class="screen is-active" id="screen-home">
       <div class="home-inner">
+        <p class="invite hidden" id="inviteLine"></p>
         <p class="eyebrow" data-i18n="eyebrow"></p>
         <h1 class="title" data-i18n="title"></h1>
         <p class="subtitle" data-i18n="subtitle"></p>
@@ -44,9 +45,9 @@
           <path class="thread-path" d="M-10 70 C 60 20, 110 110, 150 60 S 240 20, 310 60" />
         </svg>
 
-        <button class="btn btn-primary" id="btnStart" type="button" data-i18n="start"></button>
-        <button class="btn-link hidden" id="btnSeeToday" type="button" data-i18n="seeToday"></button>
+        <button class="btn btn-primary" id="btnStart" type="button"></button>
         <p class="small-note" data-i18n="limited"></p>
+        <p class="valentine hidden" id="valentine"></p>
       </div>
     </section>
 
@@ -79,9 +80,22 @@
         </fieldset>
 
         <p class="form-error" id="formError" role="alert"></p>
-        <button class="btn btn-primary" type="submit" data-i18n="draw"></button>
+        <button class="btn btn-primary" type="submit" data-i18n="next"></button>
         <p class="small-note" data-i18n="privacy"></p>
       </form>
+    </section>
+
+    <!-- 屏 2b · 情景题（每题一屏） -->
+    <section class="screen" id="screen-quiz">
+      <div class="quiz">
+        <div class="quiz-top">
+          <button class="btn-link back" id="quizBack" type="button" data-i18n="back"></button>
+          <span class="quiz-step" id="quizStep"></span>
+        </div>
+        <div class="quiz-dots" id="quizDots" aria-hidden="true"><i></i><i></i><i></i></div>
+        <h2 class="quiz-q" id="quizQ"></h2>
+        <div class="quiz-options" id="quizOptions" role="radiogroup"></div>
+      </div>
     </section>
 
     <!-- 屏 3 · 系线动画 -->
@@ -96,6 +110,35 @@
 
     <!-- 屏 4 · 结果 -->
     <section class="screen" id="screen-result">
+      <!-- 1. 人格 -->
+      <div class="persona">
+        <div class="persona-art" id="pArt"></div>
+        <p class="persona-label" id="pLabel"></p>
+        <p class="persona-desc" id="pDesc"></p>
+        <div class="persona-traits">
+          <p><span class="reading-label" data-i18n="shine"></span><span id="pShine"></span></p>
+          <p><span class="reading-label" data-i18n="tip"></span><span id="pTip"></span></p>
+        </div>
+        <p class="want-line" id="pWant"></p>
+        <p class="status-line" id="rStatus"></p>
+      </div>
+
+      <!-- 双人卡（通过邀请链接进来时显示） -->
+      <div class="duo hidden" id="duo">
+        <p class="section-label" data-i18n="duoLabel"></p>
+        <h3 class="duo-title" id="duoTitle"></h3>
+        <div class="duo-pair">
+          <div class="duo-person"><div class="duo-art" id="duoArtA"></div><b id="duoNameA"></b><span id="duoPA"></span></div>
+          <span class="duo-x">×</span>
+          <div class="duo-person"><div class="duo-art" id="duoArtB"></div><b id="duoNameB"></b><span id="duoPB"></span></div>
+        </div>
+        <p class="duo-line" id="duoLine"></p>
+        <button class="btn btn-secondary wide" id="btnSaveDuo" type="button" data-i18n="saveDuo"></button>
+        <p class="small-note" data-i18n="duoNote"></p>
+      </div>
+
+      <!-- 2. 今日缘分卡 -->
+      <p class="section-label" data-i18n="todayCard"></p>
       <div class="card-stage">
         <div class="card" id="card">
           <div class="card-face card-back">
@@ -112,8 +155,9 @@
 
       <div class="reading">
         <p class="message" id="rMessage"></p>
-        <p class="status-line" id="rStatus"></p>
+        <p class="message-sub" id="rMessageSub"></p>
 
+        <!-- 3. 反思 + 行动 -->
         <div class="reading-item">
           <span class="reading-label" data-i18n="question"></span>
           <p id="rQuestion"></p>
@@ -124,17 +168,23 @@
         </div>
       </div>
 
+      <!-- 4. 按钮 -->
       <div class="actions">
-        <div class="size-switch" role="radiogroup" aria-label="Image size">
-          <label><input type="radio" name="size" value="post" checked /><span data-i18n="sizePost"></span></label>
-          <label><input type="radio" name="size" value="story" /><span data-i18n="sizeStory"></span></label>
-        </div>
         <button class="btn btn-primary" id="btnSave" type="button" data-i18n="save"></button>
-        <p class="small-note" data-i18n="oneADay"></p>
-        <button class="btn-link" id="btnRestart" type="button" data-i18n="restart"></button>
+        <button class="btn btn-outline" id="btnSend" type="button" data-i18n="send"></button>
+        <button class="btn btn-gold" id="btnPay" type="button">
+          <span data-i18n="payTitle"></span>
+          <small data-i18n="paySub"></small>
+        </button>
       </div>
 
-      <form class="waitlist" id="waitlistForm">
+      <!-- 5. 每天一张 + 倒计时 -->
+      <div class="lock">
+        <p data-i18n="locked"></p>
+        <p class="countdown" id="countdown">--:--:--</p>
+      </div>
+
+      <form class="waitlist" id="waitlistForm" novalidate>
         <h3 data-i18n="wlTitle"></h3>
         <p class="small-note" data-i18n="wlDesc"></p>
         <div class="row">
@@ -148,9 +198,26 @@
 
   <footer class="disclaimer" data-i18n="disclaimer"></footer>
 
+  <!-- 付费意愿测试弹窗 -->
+  <div class="modal hidden" id="payModal" role="dialog" aria-modal="true" aria-labelledby="payModalTitle">
+    <form class="modal-box" id="payForm" novalidate>
+      <button class="modal-close" type="button" id="payClose" aria-label="Close">×</button>
+      <h3 id="payModalTitle" data-i18n="payModalTitle"></h3>
+      <p class="small-note" data-i18n="payModalDesc"></p>
+      <input type="email" id="payEmail" required autocomplete="email" data-i18n-placeholder="wlPlaceholder" />
+      <label class="check"><input type="checkbox" id="payAgree" /><span data-i18n="payAgree"></span></label>
+      <p class="form-error" id="payError" role="alert"></p>
+      <button class="btn btn-primary" type="submit" data-i18n="paySubmit"></button>
+    </form>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <canvas id="shareCanvas" hidden></canvas>
 
+  <script src="config.js"></script>
   <script src="cards.js"></script>
+  <script src="personas.js"></script>
+  <script src="lib/qrcode.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
