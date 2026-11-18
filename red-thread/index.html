@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#F6F0E6" />
+  <title>红线 · 缘分卡 2027</title>
+  <meta name="description" content="月老的一根红线，今天为你牵出一句话。One red thread, one message for your heart today." />
+
+  <!-- 分享预览 · Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="红线 · 缘分卡 2027" />
+  <meta property="og:description" content="月老的一根红线，今天为你牵出一句话。" />
+  <!-- <meta property="og:image" content="https://你的网址/og.png" />  以后放一张 1200×630 的预览图 -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="红线 · 缘分卡 2027" />
+  <meta name="twitter:description" content="One red thread, one message for your heart today." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+SC:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Cloudflare Web Analytics：以后把 Cloudflare 给你的代码粘贴在这里
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "你的token"}'></script>
+  -->
+</head>
+<body>
+  <header class="topbar">
+    <button id="langToggle" class="lang-toggle" type="button" aria-label="Switch language">
+      <span data-lang="zh">中</span> / <span data-lang="en">EN</span>
+    </button>
+  </header>
+
+  <main id="app">
+    <!-- 屏 1 · 首页 -->
+    <section class="screen is-active" id="screen-home">
+      <div class="home-inner">
+        <p class="eyebrow" data-i18n="eyebrow"></p>
+        <h1 class="title" data-i18n="title"></h1>
+        <p class="subtitle" data-i18n="subtitle"></p>
+
+        <svg class="float-thread" viewBox="0 0 300 120" aria-hidden="true">
+          <path class="thread-path" d="M-10 70 C 60 20, 110 110, 150 60 S 240 20, 310 60" />
+        </svg>
+
+        <button class="btn btn-primary" id="btnStart" type="button" data-i18n="start"></button>
+        <button class="btn-link hidden" id="btnSeeToday" type="button" data-i18n="seeToday"></button>
+        <p class="small-note" data-i18n="limited"></p>
+      </div>
+    </section>
+
+    <!-- 屏 2 · 输入 -->
+    <section class="screen" id="screen-input">
+      <form id="inputForm" class="form" novalidate>
+        <h2 class="form-title" data-i18n="formTitle"></h2>
+
+        <label class="field">
+          <span class="field-label" data-i18n="nickname"></span>
+          <input id="nickname" type="text" maxlength="12" autocomplete="nickname" required />
+        </label>
+
+        <div class="field">
+          <span class="field-label" data-i18n="birthday"></span>
+          <div class="row">
+            <select id="bMonth" required aria-label="Month"></select>
+            <select id="bDay" required aria-label="Day"></select>
+          </div>
+        </div>
+
+        <fieldset class="field">
+          <legend class="field-label" data-i18n="status"></legend>
+          <div class="chips">
+            <label class="chip"><input type="radio" name="status" value="single" required /><span data-i18n="st_single"></span></label>
+            <label class="chip"><input type="radio" name="status" value="maybe" /><span data-i18n="st_maybe"></span></label>
+            <label class="chip"><input type="radio" name="status" value="inlove" /><span data-i18n="st_inlove"></span></label>
+            <label class="chip"><input type="radio" name="status" value="healing" /><span data-i18n="st_healing"></span></label>
+          </div>
+        </fieldset>
+
+        <p class="form-error" id="formError" role="alert"></p>
+        <button class="btn btn-primary" type="submit" data-i18n="draw"></button>
+        <p class="small-note" data-i18n="privacy"></p>
+      </form>
+    </section>
+
+    <!-- 屏 3 · 系线动画 -->
+    <section class="screen" id="screen-tie" aria-live="polite">
+      <svg class="tie-svg" viewBox="0 0 300 160" aria-hidden="true">
+        <path class="tie-left"  d="M-10 80 C 50 40, 100 120, 140 80" />
+        <path class="tie-right" d="M310 80 C 250 120, 200 40, 160 80" />
+        <path class="tie-knot"  d="M140 80 C 150 60, 165 70, 150 82 C 135 94, 150 100, 160 80" />
+      </svg>
+      <p class="tie-text" data-i18n="tying"></p>
+    </section>
+
+    <!-- 屏 4 · 结果 -->
+    <section class="screen" id="screen-result">
+      <div class="card-stage">
+        <div class="card" id="card">
+          <div class="card-face card-back">
+            <div class="back-pattern"></div>
+          </div>
+          <div class="card-face card-front" id="cardFront">
+            <div class="card-no" id="cardNo"></div>
+            <div class="card-art" id="cardArt"></div>
+            <div class="card-name" id="cardName"></div>
+            <div class="card-name-sub" id="cardNameSub"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reading">
+        <p class="message" id="rMessage"></p>
+        <p class="status-line" id="rStatus"></p>
+
+        <div class="reading-item">
+          <span class="reading-label" data-i18n="question"></span>
+          <p id="rQuestion"></p>
+        </div>
+        <div class="reading-item">
+          <span class="reading-label" data-i18n="action"></span>
+          <p id="rAction"></p>
+        </div>
+      </div>
+
+      <div class="actions">
+        <div class="size-switch" role="radiogroup" aria-label="Image size">
+          <label><input type="radio" name="size" value="post" checked /><span data-i18n="sizePost"></span></label>
+          <label><input type="radio" name="size" value="story" /><span data-i18n="sizeStory"></span></label>
+        </div>
+        <button class="btn btn-primary" id="btnSave" type="button" data-i18n="save"></button>
+        <p class="small-note" data-i18n="oneADay"></p>
+        <button class="btn-link" id="btnRestart" type="button" data-i18n="restart"></button>
+      </div>
+
+      <form class="waitlist" id="waitlistForm">
+        <h3 data-i18n="wlTitle"></h3>
+        <p class="small-note" data-i18n="wlDesc"></p>
+        <div class="row">
+          <input type="email" id="wlEmail" name="email" required autocomplete="email" data-i18n-placeholder="wlPlaceholder" />
+          <button class="btn btn-secondary" type="submit" data-i18n="wlJoin"></button>
+        </div>
+        <p class="small-note wl-msg" id="wlMsg" role="status"></p>
+      </form>
+    </section>
+  </main>
+
+  <footer class="disclaimer" data-i18n="disclaimer"></footer>
+
+  <canvas id="shareCanvas" hidden></canvas>
+
+  <script src="cards.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
