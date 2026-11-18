@@ -514,3 +514,35 @@ html[lang="en"] .sheet-sub { font-family: var(--serif-zh); font-style: normal; f
 .sheet-story { text-align: left; font-size: 15px; line-height: 1.8; }
 html[lang="en"] .sheet-story { font-size: 17px; line-height: 1.5; }
 #sheetBody { display: flex; flex-direction: column; gap: 10px; }
+
+/* =========================================================
+   v3 · 阶段 3：双人合拍深度报告
+   ========================================================= */
+.report {
+  width: 100%; margin-top: 8px; padding: 18px 14px 14px; border-radius: 16px;
+  border: 1.5px solid var(--gold); background: linear-gradient(160deg, #FBF5E6, #F3E6C8);
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.report-title { font-weight: 500; font-size: 18px; line-height: 1.45; text-wrap: balance; }
+html[lang="en"] .report-title { font-size: 21px; }
+.report-toc { list-style: none; width: 100%; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+.report-toc li {
+  position: relative; padding: 10px 40px 10px 12px; border-radius: 10px;
+  background: rgba(255, 255, 255, .6); border: 1px solid rgba(201, 166, 107, .5);
+}
+.report-item { display: block; font-weight: 500; font-size: 15px; }
+html[lang="en"] .report-item { font-size: 17px; }
+.report-blur {
+  display: block; font-size: 13px; color: var(--ink-soft); margin-top: 2px;
+  filter: blur(4px); user-select: none; -webkit-user-select: none; pointer-events: none;
+  white-space: nowrap; overflow: hidden; text-overflow: clip;
+}
+.report-lock { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; opacity: .7; }
+.report .btn-gold { font-size: 17px; }
+.invite-unlock { max-width: 300px; margin-top: -2px; }
+.report-title { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.report-price {
+  font-family: var(--serif-en); font-size: 18px; font-weight: 600; color: var(--red);
+  border: 1px solid rgba(184, 48, 42, .4); border-radius: 999px; padding: 0 14px; line-height: 1.6;
+}
+.report-price { font-variant-numeric: lining-nums; }

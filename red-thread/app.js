@@ -44,8 +44,18 @@
       save: "保存结果卡",
       saving: "正在生成……",
       send: "把红线牵给 TA",
-      payTitle: "解锁 2027 爱情年签 · £3.99",
-      paySub: "12 个月，每月一个主题",
+      reportTitle: "解锁你们的双人合拍深度报告",
+      reportPrice: "£3.99",
+      reportItems: ["你们的相处方式", "你们最容易卡住的地方", "3 个值得一起聊的问题", "属于你们的东方典故"],
+      reportBlur: [
+        "你们在一起时，一个更习惯先表达，另一个更习惯先观察，这让你们……",
+        "当节奏不一样的时候，你们最容易在……的问题上互相误会……",
+        "第一个问题：最近一次你觉得被对方理解，是什么时候？第二个……",
+        "像古人的……一样，你们的故事里藏着一份……"
+      ],
+      reportBtn: "解锁报告",
+      reportNote: "报告根据你们的答题生成，仅供娱乐与关系反思。",
+      inviteUnlock: "邀请 TA 完成测试，可以解锁你们的双人合拍报告。",
       locked: "今天的红线已系好，明天 00:00 再来",
       duoLabel: "双人红线",
       duoTitle: (a, b) => a + " × " + b + " 的红线",
@@ -55,11 +65,11 @@
       shareText: (n) => n + " 给你牵了一根红线，看看你们是什么组合？",
       copied: "链接已复制，发给 TA 吧",
       copyFail: "复制失败，请手动复制这个链接：",
-      payModalTitle: "即将上线！留下邮箱，首发享 5 折。",
-      payModalDesc: "2027 爱情年签：12 个月，每月一个爱情主题。",
+      payModalTitle: "报告即将上线！留下邮箱，首发时免费送你们一份。",
+      payModalDesc: "报告根据你们的答题生成，仅供娱乐与关系反思。",
       payAgree: "我同意接收上线通知",
       paySubmit: "提交",
-      payThanks: "谢谢！上线时第一时间通知你。",
+      payThanks: "谢谢！报告上线时，我们会把免费报告发到你的邮箱。",
       errEmail: "请填写正确的邮箱",
       errAgree: "请勾选同意接收上线通知",
       wlTitle: "加入 Inner Lab 候补名单",
@@ -128,8 +138,18 @@
       save: "Save my card",
       saving: "Creating…",
       send: "Send a thread to someone",
-      payTitle: "Unlock your 2027 Love Year · £3.99",
-      paySub: "12 months, one theme each month",
+      reportTitle: "Unlock your Duo Match Report",
+      reportPrice: "£3.99",
+      reportItems: ["How you two connect", "Where you might get stuck", "3 questions to talk about together", "Your Eastern love story"],
+      reportBlur: [
+        "When you're together, one of you tends to speak first while the other watches, which means…",
+        "When your paces differ, you're most likely to misread each other about…",
+        "First: when did you last feel truly understood by them? Second…",
+        "Like the old tale of…, your story holds a quiet…"
+      ],
+      reportBtn: "Unlock the report",
+      reportNote: "Based on your answers. For fun and reflection.",
+      inviteUnlock: "Invite them to unlock your Duo Match Report.",
       locked: "Today's thread is tied. Come back after midnight.",
       duoLabel: "Two threads",
       duoTitle: (a, b) => a + " × " + b + "'s Red Thread",
@@ -139,11 +159,11 @@
       shareText: (n) => n + " sent you a red thread. See what you are together?",
       copied: "Link copied. Send it to them!",
       copyFail: "Couldn't copy. Please copy this link:",
-      payModalTitle: "Coming soon! Leave your email for 50% off at launch.",
-      payModalDesc: "Your 2027 Love Year: 12 months, one love theme each month.",
+      payModalTitle: "Coming soon! Leave your email and get your first report free at launch.",
+      payModalDesc: "Based on your answers. For fun and reflection.",
       payAgree: "I agree to receive a launch notification",
       paySubmit: "Submit",
-      payThanks: "Thank you! We'll let you know at launch.",
+      payThanks: "Thank you! We'll email your free report at launch.",
       errEmail: "Please enter a valid email",
       errAgree: "Please tick the box to receive the notification",
       wlTitle: "Join the Inner Lab waitlist",
@@ -205,7 +225,7 @@
        "save_duo"         保存双人卡
        "send_thread"      点击「把红线牵给 TA」
        "invite_open"      通过双人链接打开网站
-       "pay_click"        点击付费按钮（解锁 2027 爱情年签）
+       "pay_click"        点击付费按钮（解锁双人合拍深度报告）
        "pay_email_submit" 在付费弹窗里提交邮箱（只在真正提交成功后记录）
        "waitlist"         加入 Inner Lab 候补名单                    */
   function track(name, data) {
@@ -712,8 +732,30 @@
 
   function renderDuo() {
     const box = $("duo");
-    if (!invite || !current) { box.classList.add("hidden"); return; }
     const t = T[lang];
+    const isDuo = !!(invite && current);
+    // 单人用户：在“把红线牵给 TA”下面提示可以解锁双人报告
+    document.querySelectorAll(".invite-unlock").forEach((n) => { n.textContent = t.inviteUnlock; n.classList.toggle("hidden", isDuo); });
+    if (!isDuo) { box.classList.add("hidden"); return; }
+    // 双人合拍深度报告（付费意愿测试）：目录 + 模糊的“锁住”内容
+    const toc = $("reportToc");
+    toc.innerHTML = "";
+    t.reportItems.forEach((name, i) => {
+      const li = document.createElement("li");
+      const h = document.createElement("span");
+      h.className = "report-item";
+      h.textContent = (i + 1) + ". " + name;
+      const blur = document.createElement("span");
+      blur.className = "report-blur";
+      blur.setAttribute("aria-hidden", "true");
+      blur.textContent = t.reportBlur[i];
+      const lock = document.createElement("span");
+      lock.className = "report-lock";
+      lock.setAttribute("aria-hidden", "true");
+      lock.textContent = "🔒";
+      li.append(h, blur, lock);
+      toc.appendChild(li);
+    });
     const a = PERSONAS[invite.p], b = PERSONAS[current.persona];
     $("duoTitle").textContent = t.duoTitle(invite.from, current.nickname);
     $("duoArtA").innerHTML = symbolSVG(personaIcon(invite.p));
@@ -1170,8 +1212,11 @@
 
   /* ---------- 付费意愿测试弹窗 ---------- */
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  let payContext = "";
   function openPay() {
-    track("pay_click");
+    track("pay_click", { product: "duo-report" });
+    // 记下是哪一对人格（例如 05x12），提交邮箱时一起发给 Formspree，方便以后分析
+    payContext = invite && current ? pad2(invite.p + 1) + "x" + pad2(current.persona + 1) : "";
     $("payError").textContent = "";
     $("payModal").classList.remove("hidden");
     setTimeout(() => $("payEmail").focus(), 50);
@@ -1193,7 +1238,7 @@
     err.textContent = "";
     try {
       if (!window.FORM_URL) { err.textContent = t.notReady; return; } // 没设置地址：不假装成功
-      await postEmail(window.FORM_URL, { email, lang, source: "love-year-2027" });
+      await postEmail(window.FORM_URL, { email, lang, source: "duo-report", pair: payContext });
       track("pay_email_submit");
       closePay();
       $("payEmail").value = ""; $("payAgree").checked = false;
@@ -1252,7 +1297,7 @@
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet(); });
     $("btnSave2").addEventListener("click", () => saveImage($("btnSave2"), makeCardImage, "save", "save_card"));
     $("btnSend2").addEventListener("click", onSend);
-    $("btnPay").addEventListener("click", openPay);
+    $("btnReport").addEventListener("click", openPay);
     $("payClose").addEventListener("click", closePay);
     $("payModal").addEventListener("click", (e) => { if (e.target === $("payModal")) closePay(); });
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePay(); });

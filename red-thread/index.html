@@ -144,6 +144,7 @@
       <div class="actions actions-top">
         <button class="btn btn-primary" id="btnSave2" type="button" data-i18n="save"></button>
         <button class="btn btn-outline" id="btnSend2" type="button" data-i18n="send"></button>
+        <p class="small-note invite-unlock"></p>
       </div>
 
       <!-- 双人卡（通过邀请链接进来时显示） -->
@@ -158,6 +159,14 @@
         <p class="duo-line" id="duoLine"></p>
         <button class="btn btn-secondary wide" id="btnSaveDuo" type="button" data-i18n="saveDuo"></button>
         <p class="small-note" data-i18n="duoNote"></p>
+
+        <!-- 双人合拍深度报告（付费意愿测试，还没有真实报告） -->
+        <div class="report">
+          <h4 class="report-title"><span data-i18n="reportTitle"></span><span class="report-price" data-i18n="reportPrice"></span></h4>
+          <ol class="report-toc" id="reportToc"></ol>
+          <button class="btn btn-gold" id="btnReport" type="button" data-i18n="reportBtn"></button>
+          <p class="small-note" data-i18n="reportNote"></p>
+        </div>
       </div>
 
       <!-- 2. 今日缘分卡 -->
@@ -203,10 +212,7 @@
       <div class="actions">
         <button class="btn btn-primary" id="btnSave" type="button" data-i18n="save"></button>
         <button class="btn btn-outline" id="btnSend" type="button" data-i18n="send"></button>
-        <button class="btn btn-gold" id="btnPay" type="button">
-          <span data-i18n="payTitle"></span>
-          <small data-i18n="paySub"></small>
-        </button>
+        <p class="small-note invite-unlock"></p>
       </div>
 
       <!-- 5. 每天一张 + 倒计时 -->

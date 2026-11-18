@@ -7,7 +7,7 @@
 window.SITE_URL = "https://tiaz369.github.io/red-thread/";
 
 // ① Formspree 表单地址，例如 "https://formspree.io/f/abcdwxyz"
-//    FORM_URL     = 付费测试弹窗的邮箱
+//    FORM_URL     = 「双人合拍深度报告」弹窗的邮箱（提交时会带上 source=duo-report 和人格组合，例如 05x12）
 //    WAITLIST_URL = 「Inner Lab 候补名单」的邮箱（可以和上面填同一个）
 //    留空 = 还没开通：用户提交时会看到“邮箱提交功能还没开通”的提示，不会假装成功。
 window.FORM_URL = "";
