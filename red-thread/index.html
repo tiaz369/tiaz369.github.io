@@ -11,19 +11,23 @@
   <meta property="og:type" content="website" />
   <meta property="og:title" content="红线 · 缘分卡 2027" />
   <meta property="og:description" content="月老的一根红线，今天为你牵出一句话。" />
-  <!-- <meta property="og:image" content="https://你的网址/og.png" />  以后放一张 1200×630 的预览图 -->
+  <!-- 分享预览图：换网址时，把下面 3 处 https://tiaz369.github.io/red-thread/ 一起改掉 -->
+  <meta property="og:url" content="https://tiaz369.github.io/red-thread/" />
+  <meta property="og:image" content="https://tiaz369.github.io/red-thread/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="红线 · 缘分卡 2027 — Red Thread · Love Card" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="红线 · 缘分卡 2027" />
   <meta name="twitter:description" content="One red thread, one message for your heart today." />
+  <meta name="twitter:image" content="https://tiaz369.github.io/red-thread/og.png" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+SC:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 
-  <!-- Cloudflare Web Analytics：以后把 Cloudflare 给你的代码粘贴在这里
-  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "你的token"}'></script>
-  -->
+  <!-- 统计（Cloudflare Web Analytics + GoatCounter）在 config.js 里设置，不用改这里 -->
 </head>
 <body>
   <header class="topbar">
@@ -121,6 +125,12 @@
         </div>
         <p class="want-line" id="pWant"></p>
         <p class="status-line" id="rStatus"></p>
+      </div>
+
+      <!-- 人格下方的快捷按钮 -->
+      <div class="actions actions-top">
+        <button class="btn btn-primary" id="btnSave2" type="button" data-i18n="save"></button>
+        <button class="btn btn-outline" id="btnSend2" type="button" data-i18n="send"></button>
       </div>
 
       <!-- 双人卡（通过邀请链接进来时显示） -->

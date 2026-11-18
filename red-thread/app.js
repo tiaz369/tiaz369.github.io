@@ -167,10 +167,37 @@
        "send_thread"      点击「把红线牵给 TA」
        "invite_open"      通过双人链接打开网站
        "pay_click"        点击付费按钮（解锁 2027 爱情年签）
-       "pay_email_submit" 在付费弹窗里提交邮箱
+       "pay_email_submit" 在付费弹窗里提交邮箱（只在真正提交成功后记录）
        "waitlist"         加入 Inner Lab 候补名单                    */
   function track(name, data) {
-    // 例：window.plausible && window.plausible(name, { props: data });
+    // GoatCounter：每个事件在后台显示为 “event-事件名”
+    const send = () => {
+      if (window.goatcounter && window.goatcounter.count) {
+        window.goatcounter.count({ path: "event-" + name, title: name, event: true });
+        return true;
+      }
+      return false;
+    };
+    if (!send()) setTimeout(send, 2500); // 统计脚本还没加载完时，稍后再试一次
+  }
+  // 按 config.js 里的设置加载统计脚本（留空就不加载）
+  function loadAnalytics() {
+    const cf = (window.CF_ANALYTICS_TOKEN || "").trim();
+    if (cf) {
+      const sc = document.createElement("script");
+      sc.defer = true;
+      sc.src = "https://static.cloudflareinsights.com/beacon.min.js";
+      sc.setAttribute("data-cf-beacon", JSON.stringify({ token: cf }));
+      document.head.appendChild(sc);
+    }
+    const gc = (window.GOATCOUNTER_CODE || "").trim();
+    if (/^[a-z0-9-]+$/i.test(gc)) {
+      const sg = document.createElement("script");
+      sg.async = true;
+      sg.src = "https://gc.zgo.at/count.js";
+      sg.setAttribute("data-goatcounter", "https://" + gc + ".goatcounter.com/count");
+      document.head.appendChild(sg);
+    }
   }
 
   /* ---------- helpers ---------- */
@@ -547,9 +574,35 @@
     }
     return lines.filter(Boolean);
   }
+  // 均衡断行：保持行数不变，把每行宽度尽量拉平，避免最后一行只剩一个词
+  function balancedWrap(ctx, text, maxWidth) {
+    let lines = wrapText(ctx, text, maxWidth);
+    if (lines.length < 2) return lines;
+    const n = lines.length;
+    let lo = maxWidth * 0.4, hi = maxWidth;
+    for (let k = 0; k < 14; k++) {
+      const mid = (lo + hi) / 2;
+      if (wrapText(ctx, text, mid).length <= n) hi = mid; else lo = mid;
+    }
+    lines = wrapText(ctx, text, hi);
+    // 保险：如果最后一行还是只有一个英文单词，从上一行挪一个词下来
+    const last = lines[lines.length - 1];
+    if (lines.length >= 2 && /^[^\s\u3000-\u9fff]+$/.test(last)) {
+      const prev = lines[lines.length - 2].split(" ");
+      if (prev.length > 2) {
+        const moved = prev.pop();
+        const candidate = moved + " " + last;
+        if (ctx.measureText(candidate).width <= maxWidth) {
+          lines[lines.length - 2] = prev.join(" ");
+          lines[lines.length - 1] = candidate;
+        }
+      }
+    }
+    return lines;
+  }
   // 中文寄语：按 / 分行，单行太长时再自动断
   function zhLines(ctx, card, maxWidth) {
-    return msgLines(card, "zh").flatMap((l) => (ctx.measureText(l).width > maxWidth ? wrapText(ctx, l, maxWidth) : [l]));
+    return msgLines(card, "zh").flatMap((l) => (ctx.measureText(l).width > maxWidth ? balancedWrap(ctx, l, maxWidth) : [l]));
   }
   function roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
@@ -661,15 +714,33 @@
     // 先量好下方文字的高度，再决定插画大小
     const maxW = 820;
     ctx.font = (lang === "zh" ? "500 46px " + ZH : "500 50px " + EN);
-    const mainLines = lang === "zh" ? zhLines(ctx, c, maxW) : wrapText(ctx, msgPlain(c, "en"), maxW);
+    const mainLines = lang === "zh" ? zhLines(ctx, c, maxW) : balancedWrap(ctx, msgPlain(c, "en"), maxW);
     const mainLH = lang === "zh" ? 66 : 60;
     ctx.font = (lang === "zh" ? "italic 400 30px " + EN : "400 26px " + ZH);
-    const subLines = wrapText(ctx, msgPlain(c, other), maxW);
+    const subLines = balancedWrap(ctx, msgPlain(c, other), maxW);
     const subLH = 40;
 
     const NAME_BASE_MAX = 1100;         // “致 xxx” 的基线不能低于这里（下面是二维码）
-    const below = 44 + 72 + 46 + 22 + mainLines.length * mainLH + 4 + subLines.length * subLH + 30 + 58;
-    const artTop = 168;
+    const below = 44 + 72 + 14 + mainLines.length * mainLH + 4 + subLines.length * subLH + 30 + 58;
+
+    // 大号人格标签：“你是 · 灯笼型恋人 / You are · The Lantern”，放在编号和印章之间
+    const labelMain = lang === "zh" ? "你是 · " + p.zh.name + "恋人" : "You are · " + p.en.name;
+    const labelSub = lang === "zh" ? "You are · " + p.en.name : "你是 · " + p.zh.name + "恋人";
+    const labelMaxW = 500; // 不碰到左边编号和右边印章
+    let labelSize = lang === "zh" ? 50 : 54;
+    ctx.font = "500 " + labelSize + "px " + mainFont;
+    while (ctx.measureText(labelMain).width > labelMaxW && labelSize > 30) {
+      labelSize -= 2;
+      ctx.font = "500 " + labelSize + "px " + mainFont;
+    }
+    ctx.textAlign = "center";
+    ctx.fillStyle = INK;
+    ctx.fillText(labelMain, W / 2, 152);
+    ctx.fillStyle = GOLD;
+    ctx.font = (lang === "zh" ? "italic 500 30px " + EN : "500 26px " + ZH) ;
+    ctx.fillText(labelSub + (c.special ? "  ·  " + t.special : ""), W / 2, 196);
+
+    const artTop = 232;
     const art = Math.max(360, Math.min(640, NAME_BASE_MAX - artTop - below));
     const artX = (W - art) / 2;
 
@@ -702,13 +773,9 @@
     ctx.fillStyle = SOFT; ctx.font = sm; ctx.fillText(c[other].name, nx + bw + 22, y + 56);
     y += 72;
 
-    // 6. 人格标签（金色小字）
+    // （人格标签已移到卡片顶部，大字号显示）
     ctx.textAlign = "center";
-    ctx.fillStyle = GOLD;
-    ctx.font = (lang === "zh" ? "500 28px " + ZH : "500 32px " + EN);
-    const tag = lang === "zh" ? p.zh.name + "恋人 · " + p.en.name : p.en.name + " · " + p.zh.name + "恋人";
-    ctx.fillText(tag + (c.special ? "  ·  " + t.special : ""), W / 2, y + 32);
-    y += 46 + 22;
+    y += 14;
 
     // 7. 寄语 + 另一语言小字
     ctx.fillStyle = INK;
@@ -809,17 +876,17 @@
     // 组合寄语
     ctx.fillStyle = INK;
     ctx.font = (lang === "zh" ? "500 50px " + ZH : "500 54px " + EN);
-    const ml = wrapText(ctx, line[lang], 840);
+    const ml = balancedWrap(ctx, line[lang], 840);
     ml.forEach((l, i) => ctx.fillText(l, W / 2, y + i * 70));
     y += (ml.length - 1) * 70 + 54;
     ctx.fillStyle = SOFT;
     ctx.font = (lang === "zh" ? "italic 400 32px " + EN : "400 28px " + ZH);
-    wrapText(ctx, line[other], 840).forEach((l, i) => ctx.fillText(l, W / 2, y + i * 42));
+    balancedWrap(ctx, line[other], 840).forEach((l, i) => ctx.fillText(l, W / 2, y + i * 42));
 
     // 声明
     ctx.fillStyle = "rgba(110,98,90,.85)";
     ctx.font = (lang === "zh" ? "400 24px " + ZH : "italic 400 28px " + EN);
-    wrapText(ctx, t.duoNote, 600).forEach((l, i) => ctx.fillText(l, W / 2 - 60, H - 250 + i * 34));
+    balancedWrap(ctx, t.duoNote, 600).forEach((l, i) => ctx.fillText(l, W / 2 - 60, H - 250 + i * 34));
 
     drawFooter(ctx, W, H, t);
     return toBlob(canvas);
@@ -935,6 +1002,7 @@
 
   /* ---------- 启动 ---------- */
   function init() {
+    loadAnalytics();
     applyLang();
     prefill();
     if (invite) track("invite_open", { p: invite.p + 1 });
@@ -951,6 +1019,8 @@
     $("btnSave").addEventListener("click", () => saveImage($("btnSave"), makeCardImage, "save", "save_card"));
     $("btnSaveDuo").addEventListener("click", () => saveImage($("btnSaveDuo"), makeDuoImage, "saveDuo", "save_duo"));
     $("btnSend").addEventListener("click", onSend);
+    $("btnSave2").addEventListener("click", () => saveImage($("btnSave2"), makeCardImage, "save", "save_card"));
+    $("btnSend2").addEventListener("click", onSend);
     $("btnPay").addEventListener("click", openPay);
     $("payClose").addEventListener("click", closePay);
     $("payModal").addEventListener("click", (e) => { if (e.target === $("payModal")) closePay(); });

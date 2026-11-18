@@ -381,3 +381,7 @@ html[lang="en"] .lock { font-size: 16px; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
 .card-art img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+
+/* ---------- v2.1 ---------- */
+.actions-top { margin: -14px 0 34px; }
+.message, .message-sub, .persona-desc, .duo-line, .want-line, .status-line, .subtitle { text-wrap: pretty; }

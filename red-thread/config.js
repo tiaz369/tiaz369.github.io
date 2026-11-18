@@ -3,12 +3,19 @@
    ========================================================= */
 
 // 网站地址（结果卡二维码 + 双人红线链接都用它）。
-// 还是 "example" 占位时，网站会自动用当前打开的网址。
-window.SITE_URL = "https://redthread.example";
+// 以后换成自己的域名（例如 Cloudflare Pages 地址），改这里即可。
+window.SITE_URL = "https://tiaz369.github.io/red-thread/";
 
-// 「解锁 2027 爱情年签」弹窗的邮箱提交地址（例如 Formspree：https://formspree.io/f/xxxx）。
-// 留空 = 暂不提交（用户仍会看到“谢谢”提示，但邮箱不会被保存）。
+// ① Formspree 表单地址，例如 "https://formspree.io/f/abcdwxyz"
+//    FORM_URL     = 「解锁 2027 爱情年签」弹窗的邮箱
+//    WAITLIST_URL = 「Inner Lab 候补名单」的邮箱（可以和上面填同一个）
+//    留空 = 不提交（用户仍会看到“谢谢”，但邮箱不会被保存）。
 window.FORM_URL = "";
-
-// 「Inner Lab 候补名单」的提交地址，可以和上面用同一个。
 window.WAITLIST_URL = "";
+
+// ② Cloudflare Web Analytics 的 token（只统计访问量），例如 "0123456789abcdef0123456789abcdef"
+window.CF_ANALYTICS_TOKEN = "";
+
+// ③ GoatCounter 的代码（统计按钮事件：保存卡、牵线、点付费、提交邮箱）
+//    例如你的后台网址是 https://redthread.goatcounter.com ，这里就填 "redthread"
+window.GOATCOUNTER_CODE = "";
