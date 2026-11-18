@@ -30,3 +30,9 @@
 完整提示词示例（第 5 张）：
 
 > Minimalist Chinese ink-and-gongbi inspired illustration, soft watercolor wash, warm cream paper background (#F6F0E6), one fine vermilion red thread (#B8302A) weaving through the scene, muted gold accents, lots of empty space, calm poetic mood, centered composition, no text, no people's faces, square format. A plum blossom branch with a folded letter tied by red thread.
+
+## 人格插画（可选）
+
+首页 3 张扇形卡和结果页的人格图标也可以换成插画：
+- 文件名：`persona-01.png` 到 `persona-12.png`（编号对应 `personas.js` 的顺序，例如 05 = 灯笼型，02 = 月光型，01 = 流萤型）
+- 方形，建议 512×512；没有图片时显示现在的图标
