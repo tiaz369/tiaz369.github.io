@@ -70,6 +70,20 @@
       wlError: "提交失败，请检查网络后再试。",
       notReady: "邮箱提交功能还没开通，请稍后再试。",
       disclaimer: "本内容仅供娱乐与自我反思，不构成任何建议。",
+      storyTitle: "这张卡的故事",
+      expand: "展开", collapse: "收起",
+      sourcePrefix: "出处：",
+      bookEntry: (n, total) => "我的红线册 " + n + " / " + total,
+      bookTitle: "我的红线册",
+      bookDesc: (n, total) => "已收集 " + n + " / " + total + " 张。每天一张，集齐解锁月老的完整故事。",
+      bookDone: "12 张已集齐！月老的完整故事和金色卡面已解锁。",
+      bookNote: "清除浏览器数据会丢失收集记录。",
+      bookBack: "返回",
+      bookTap: "点开已收集的卡片，可以重看寄语和典故。",
+      legendLocked: (n, total) => "集齐 12 张，解锁月老的完整故事（" + n + " / " + total + "）",
+      legendOpen: "✦ 月老的完整故事 · 已解锁",
+      collectTip: "明天再来，集齐 12 张，解锁月老的完整故事。",
+      goldFace: "金色限定卡面",
       special: "羊年限定",
       forName: (n) => "致 " + n,
       brand: "红线 Red Thread",
@@ -140,6 +154,20 @@
       wlError: "Couldn't submit. Please check your connection and try again.",
       notReady: "Email sign-up isn't open yet. Please try again later.",
       disclaimer: "For entertainment and self-reflection only.",
+      storyTitle: "The story behind this card",
+      expand: "Read more", collapse: "Show less",
+      sourcePrefix: "Source: ",
+      bookEntry: (n, total) => "My Red Thread Book " + n + " / " + total,
+      bookTitle: "My Red Thread Book",
+      bookDesc: (n, total) => n + " of " + total + " collected. One card a day; collect all 12 to unlock the full legend.",
+      bookDone: "All 12 collected! The full legend and the gold card face are unlocked.",
+      bookNote: "Clearing browser data will reset your collection.",
+      bookBack: "Back",
+      bookTap: "Tap a collected card to read its message and story again.",
+      legendLocked: (n, total) => "Collect all 12 to unlock the full legend (" + n + " / " + total + ")",
+      legendOpen: "✦ The full legend · Unlocked",
+      collectTip: "Come back tomorrow. Collect all 12 to unlock the full legend.",
+      goldFace: "Gold edition",
       special: "Year of the Goat",
       forName: (n) => "For " + n,
       brand: "Red Thread 红线",
@@ -224,15 +252,20 @@
     const d = new Date();
     return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
   }
-  // FNV-1a 哈希：同样的输入永远得到同样的数字
-  function hash(str) {
-    let h = 0x811c9dc5;
-    for (const ch of str) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; }
-    return h >>> 0;
-  }
+  // 抽卡规则在 draw.js：同一天结果不变，并优先抽还没收集到的卡
   function pickCard(nickname, month, day) {
-    return hash(nickname.trim().toLowerCase() + "|" + month + "-" + day + "|" + todayStr()) % CARDS.length;
+    return window.RT_DRAW.drawCard(nickname, month, day, todayStr(), getCollected(), CARDS.length);
   }
+  /* ---------- 红线册（收集记录） ---------- */
+  function getCollected() {
+    const arr = Array.isArray(store.collected) ? store.collected : [];
+    return arr.filter((i) => Number.isInteger(i) && i >= 0 && i < CARDS.length);
+  }
+  function addCollected(i) {
+    const arr = getCollected();
+    if (!arr.includes(i)) { arr.push(i); store.collected = arr; save(); }
+  }
+  function isComplete() { return getCollected().length >= CARDS.length; }
   function cleanName(s) {
     return String(s || "").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, 12);
   }
@@ -289,6 +322,8 @@
     renderHome();
     if ($("screen-quiz").classList.contains("is-active")) renderQuiz();
     if (current) renderResult(false);
+    if ($("screen-book").classList.contains("is-active")) renderBook();
+    if (!$("sheet").classList.contains("hidden")) closeSheet();
     store.lang = lang; save();
   }
 
@@ -299,6 +334,10 @@
     $("btnStart").textContent = done ? (invite ? t.seeDuo : t.seeToday) : t.start;
 
     renderFan();
+    // 老用户：首页显示红线册入口
+    const nGot = getCollected().length;
+    $("bookEntryHome").textContent = t.bookEntry(nGot, CARDS.length);
+    $("bookEntryHome").classList.toggle("hidden", nGot === 0);
     // 主标题：只在 | 处换行，避免一行只剩一两个字
     const title = document.querySelector("#screen-home .title");
     title.textContent = "";
@@ -460,15 +499,17 @@
   function finishQuiz() {
     const p = store.profile;
     const persona = window.personaIndex(answers.style, answers.pace);
+    const index = pickCard(p.nickname, p.month, p.day); // 先抽卡，再记进红线册
     store.today = {
       date: todayStr(),
-      index: pickCard(p.nickname, p.month, p.day),
+      index: index,
       persona: persona,
       want: answers.want,
       status: p.status,
       nickname: p.nickname
     };
     save();
+    addCollected(index);
     current = Object.assign({}, store.today);
     track("quiz_done", { persona: persona + 1 });
     show("screen-tie");
@@ -538,17 +579,24 @@
     setCardArt($("cardArt"), current.index);
     $("cardName").textContent = c[lang].name;
     $("cardNameSub").textContent = c[other].name;
-    front.classList.toggle("special", !!c.special);
+    const gold = !!c.special || isComplete(); // 集齐 12 张后，所有卡片都用金色卡面
+    front.classList.toggle("special", gold);
     const oldTag = front.querySelector(".card-tag");
     if (oldTag) oldTag.remove();
-    if (c.special) front.insertAdjacentHTML("beforeend", '<div class="card-tag">' + t.special + "</div>");
+    if (c.special || gold) front.insertAdjacentHTML("beforeend", '<div class="card-tag">' + (c.special ? t.special : t.goldFace) + "</div>");
     setLines($("rMessage"), lang === "zh" ? msgLines(c, "zh") : [msgPlain(c, "en")]);
     $("rMessageSub").textContent = msgPlain(c, other);
+    renderStory(c);
     $("rQuestion").textContent = c[lang].question;
     $("rAction").textContent = c[lang].action;
 
     // 双人卡
     renderDuo();
+
+    // 红线册入口 + 明天再来提示
+    const n = getCollected().length;
+    $("bookEntryResult").textContent = t.bookEntry(n, CARDS.length);
+    $("collectTip").textContent = isComplete() ? t.bookDone : t.collectTip;
 
     if (flip) {
       const card = $("card");
@@ -558,6 +606,110 @@
     }
     startCountdown();
   }
+  // “这张卡的故事”：默认显示前两行，点“展开”看全文
+  let storyOpen = false;
+  function renderStory(c) {
+    const t = T[lang];
+    $("storyText").textContent = c.story[lang];
+    $("storySource").textContent = t.sourcePrefix + c.source[lang];
+    $("storyText").classList.toggle("clamp", !storyOpen);
+    $("storyToggle").textContent = storyOpen ? t.collapse : t.expand;
+    $("storyToggle").setAttribute("aria-expanded", storyOpen ? "true" : "false");
+  }
+  function toggleStory() {
+    storyOpen = !storyOpen;
+    renderStory(CARDS[current.index]);
+  }
+
+  /* ---------- 红线册页面 ---------- */
+  function renderBook() {
+    const t = T[lang];
+    const got = getCollected();
+    const done = isComplete();
+    $("bookTitle").textContent = t.bookTitle;
+    $("bookDesc").textContent = done ? t.bookDone : t.bookDesc(got.length, CARDS.length);
+    const legend = $("legendBtn");
+    legend.textContent = done ? t.legendOpen : t.legendLocked(got.length, CARDS.length);
+    legend.disabled = !done;
+    legend.classList.toggle("unlocked", done);
+    const grid = $("bookGrid");
+    grid.innerHTML = "";
+    CARDS.forEach((c, i) => {
+      const has = got.includes(i);
+      const cell = document.createElement("button");
+      cell.type = "button";
+      cell.className = "book-cell" + (has ? " has" : " empty") + (has && (done || c.special) ? " gold" : "");
+      const no = document.createElement("span");
+      no.className = "book-no";
+      no.textContent = pad2(i + 1);
+      if (has) {
+        const art = document.createElement("span");
+        art.className = "book-art";
+        setCardArt(art, i);
+        const name = document.createElement("span");
+        name.className = "book-name";
+        name.textContent = c[lang].name;
+        cell.append(no, art, name);
+        cell.setAttribute("aria-label", c[lang].name);
+        cell.addEventListener("click", () => openBookCard(i));
+      } else {
+        const q = document.createElement("span");
+        q.className = "book-q";
+        q.textContent = "？";
+        cell.append(no, q);
+        cell.disabled = true;
+        cell.setAttribute("aria-label", "No. " + pad2(i + 1) + " ?");
+      }
+      grid.appendChild(cell);
+    });
+  }
+  function openBook() {
+    renderBook();
+    show("screen-book");
+  }
+  function closeBook() {
+    if (current) { show("screen-result"); renderResult(false); }
+    else { renderHome(); show("screen-home"); }
+  }
+  function openSheet(build) {
+    const body = $("sheetBody");
+    body.innerHTML = "";
+    build(body);
+    $("sheet").classList.remove("hidden");
+  }
+  function closeSheet() { $("sheet").classList.add("hidden"); }
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function openBookCard(i) {
+    const c = CARDS[i], t = T[lang], other = lang === "zh" ? "en" : "zh";
+    openSheet((b) => {
+      const art = el("div", "sheet-art");
+      setCardArt(art, i);
+      b.append(
+        el("p", "book-no-big", "No. " + pad2(i + 1) + " / " + CARDS.length),
+        art,
+        el("h3", "sheet-title", c[lang].name),
+        el("p", "sheet-sub", c[other].name),
+        (() => { const m = el("p", "sheet-message"); setLines(m, lang === "zh" ? msgLines(c, "zh") : [msgPlain(c, "en")]); return m; })(),
+        el("span", "reading-label", t.storyTitle),
+        el("p", "sheet-story", c.story[lang]),
+        el("p", "story-source", t.sourcePrefix + c.source[lang])
+      );
+    });
+  }
+  function openLegend() {
+    if (!isComplete()) return;
+    const L = window.LEGEND, t = T[lang];
+    openSheet((b) => {
+      b.append(el("p", "book-no-big", "✦ 12 / 12 " + (lang === "zh" ? "已集齐" : "collected")), el("h3", "sheet-title", L.title[lang]));
+      String(L[lang]).split(/\n\n+/).forEach((para) => b.append(el("p", "sheet-story", para)));
+    });
+  }
+
   function renderDuo() {
     const box = $("duo");
     if (!invite || !current) { box.classList.add("hidden"); return; }
@@ -681,7 +833,11 @@
     return total;
   }
   function drawPaper(ctx, W, H, special) {
-    ctx.fillStyle = PAPER;
+    if (special) { // 金色卡面：暖金色渐变底
+      const g = ctx.createLinearGradient(0, 0, W, H);
+      g.addColorStop(0, "#FBF5E6"); g.addColorStop(1, "#EFDDB4");
+      ctx.fillStyle = g;
+    } else ctx.fillStyle = PAPER;
     ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = "rgba(43,37,34,0.035)";
     for (let y = 0; y < H; y += 9) for (let x = (y / 9) % 2 ? 4 : 0; x < W; x += 9) ctx.fillRect(x, y, 1.5, 1.5);
@@ -757,12 +913,13 @@
     const p = PERSONAS[current.persona];
     const W = 1080, H = 1350;
     const mainFont = lang === "zh" ? ZH : EN;
-    await ensureFonts(c.zh.name + c.en.name + c.zh.message + c.en.message + p.zh.name + p.en.name + t.brand + t.edition + t.forName(current.nickname) + "丁未羊年致");
+    await ensureFonts(c.zh.name + c.en.name + c.zh.message + c.en.message + p.zh.name + p.en.name + t.brand + t.edition + t.forName(current.nickname) + c.source.zh + c.source.en + t.sourcePrefix + t.goldFace + "丁未羊年致…");
 
     const canvas = $("shareCanvas");
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext("2d");
-    drawPaper(ctx, W, H, c.special);
+    const goldFace = !!c.special || isComplete();
+    drawPaper(ctx, W, H, goldFace);
     ctx.textBaseline = "alphabetic";
 
     // 右上印章
@@ -811,7 +968,15 @@
 
     const NAME_BASE_MAX = 1100;         // “致 xxx” 的基线不能低于这里（下面是二维码）
     const below = 34 + mainLines.length * mainLH + 4 + subLines.length * subLH + 30 + 58;
-    const artTop = 318;
+    // 出处小字（卡名下面一行）
+    ctx.textAlign = "center";
+    ctx.fillStyle = SOFT;
+    ctx.font = (lang === "zh" ? "400 22px " + ZH : "italic 400 26px " + EN);
+    let src = t.sourcePrefix + c.source[lang];
+    while (ctx.measureText(src).width > 700 && src.length > 4) src = src.slice(0, -2) + "…";
+    ctx.fillText(src + (goldFace && !c.special ? "  ·  " + t.goldFace : ""), W / 2, 320);
+
+    const artTop = 344;
     const art = Math.max(360, Math.min(640, NAME_BASE_MAX - artTop - below));
     const artX = (W - art) / 2;
 
@@ -1058,6 +1223,8 @@
 
   /* ---------- 启动 ---------- */
   function init() {
+    // 旧版本用户：把今天已经抽到的卡补记进红线册
+    if (store.today && CARDS[store.today.index] && !getCollected().includes(store.today.index)) addCollected(store.today.index);
     loadAnalytics();
     applyLang();
     prefill();
@@ -1075,6 +1242,14 @@
     $("btnSave").addEventListener("click", () => saveImage($("btnSave"), makeCardImage, "save", "save_card"));
     $("btnSaveDuo").addEventListener("click", () => saveImage($("btnSaveDuo"), makeDuoImage, "saveDuo", "save_duo"));
     $("btnSend").addEventListener("click", onSend);
+    $("storyToggle").addEventListener("click", toggleStory);
+    $("bookEntryHome").addEventListener("click", openBook);
+    $("bookEntryResult").addEventListener("click", openBook);
+    $("bookBack").addEventListener("click", closeBook);
+    $("legendBtn").addEventListener("click", openLegend);
+    $("sheetClose").addEventListener("click", closeSheet);
+    $("sheet").addEventListener("click", (e) => { if (e.target === $("sheet")) closeSheet(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet(); });
     $("btnSave2").addEventListener("click", () => saveImage($("btnSave2"), makeCardImage, "save", "save_card"));
     $("btnSend2").addEventListener("click", onSend);
     $("btnPay").addEventListener("click", openPay);

@@ -57,6 +57,7 @@
         </ul>
 
         <button class="btn btn-primary" id="btnStart" type="button"></button>
+        <button class="book-entry hidden" id="bookEntryHome" type="button"></button>
 
         <details class="about">
           <summary data-i18n="aboutQ"></summary>
@@ -179,6 +180,14 @@
         <p class="message" id="rMessage"></p>
         <p class="message-sub" id="rMessageSub"></p>
 
+        <!-- 这张卡的故事（典故） -->
+        <div class="story">
+          <span class="reading-label" data-i18n="storyTitle"></span>
+          <p class="story-text clamp" id="storyText"></p>
+          <p class="story-source" id="storySource"></p>
+          <button class="btn-link story-toggle" id="storyToggle" type="button" aria-controls="storyText"></button>
+        </div>
+
         <!-- 3. 反思 + 行动 -->
         <div class="reading-item">
           <span class="reading-label" data-i18n="question"></span>
@@ -204,6 +213,8 @@
       <div class="lock">
         <p data-i18n="locked"></p>
         <p class="countdown" id="countdown">--:--:--</p>
+        <p class="collect-tip" id="collectTip"></p>
+        <button class="book-entry" id="bookEntryResult" type="button"></button>
       </div>
 
       <form class="waitlist" id="waitlistForm" novalidate>
@@ -216,7 +227,28 @@
         <p class="small-note wl-msg" id="wlMsg" role="status"></p>
       </form>
     </section>
+
+    <!-- 我的红线册 -->
+    <section class="screen" id="screen-book">
+      <div class="quiz-top">
+        <button class="btn-link back" id="bookBack" type="button" data-i18n="bookBack"></button>
+      </div>
+      <h2 class="form-title" id="bookTitle"></h2>
+      <p class="book-desc" id="bookDesc"></p>
+      <button class="legend-btn" id="legendBtn" type="button"></button>
+      <div class="book-grid" id="bookGrid"></div>
+      <p class="small-note book-tap" data-i18n="bookTap"></p>
+      <p class="small-note book-note" data-i18n="bookNote"></p>
+    </section>
   </main>
+
+  <!-- 红线册：重看卡片 / 月老的完整故事 -->
+  <div class="modal hidden" id="sheet" role="dialog" aria-modal="true">
+    <div class="modal-box sheet-box">
+      <button class="modal-close" type="button" id="sheetClose" aria-label="Close">×</button>
+      <div id="sheetBody"></div>
+    </div>
+  </div>
 
   <footer class="disclaimer" data-i18n="disclaimer"></footer>
 
@@ -238,6 +270,7 @@
 
   <script src="config.js"></script>
   <script src="cards.js"></script>
+  <script src="draw.js"></script>
   <script src="personas.js"></script>
   <script src="lib/qrcode.js"></script>
   <script src="app.js"></script>
