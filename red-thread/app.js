@@ -60,6 +60,11 @@
       planMemberBadge: "更多人选择",
       planMemberPerks: ["每周一个双人小仪式或聊天问题", "每月新卡和新典故", "所有双人报告免费", "春节、情人节、七夕限定卡"],
       planMemberBtn: "加入会员",
+      plansTitle: "想更深入地了解你们的红线？",
+      freeLabel: "免费", freeList: "人格测试 · 每日缘分卡 · 典故 · 红线册",
+      memberLabel: "会员另享", memberList: "每周双人仪式 · 每月新卡 · 双人报告 · 节日限定卡",
+      reportLockedNote: "邀请 TA 完成测试后解锁",
+      reportLockedBtn: "先邀请 TA",
       planChosen: "你选择的是：",
       memberModalTitle: "红线会员即将上线！留下邮箱，首发时送你 1 个月免费。",
       memberThanks: "谢谢！会员上线时，我们会把 1 个月免费会员发到你的邮箱。",
@@ -163,6 +168,11 @@
       planMemberBadge: "Most popular",
       planMemberPerks: ["A small ritual or conversation prompt for two, every week", "New cards and new stories every month", "Every Duo Report included free", "Limited cards for Lunar New Year, Valentine's Day and Qixi"],
       planMemberBtn: "Become a member",
+      plansTitle: "Want to go deeper together?",
+      freeLabel: "Free", freeList: "Persona test · Daily card · Stories · Red Thread Book",
+      memberLabel: "Members also get", memberList: "Weekly rituals for two · New cards monthly · Duo Reports · Festival cards",
+      reportLockedNote: "Unlocks after they finish the test",
+      reportLockedBtn: "Invite them first",
       planChosen: "You chose: ",
       memberModalTitle: "Membership is coming soon! Leave your email for one free month at launch.",
       memberThanks: "Thank you! We'll email your free month at launch.",
@@ -244,7 +254,8 @@
        "save_duo"         保存双人卡
        "send_thread"      点击「把红线牵给 TA」
        "invite_open"      通过双人链接打开网站
-       "pay_click"        点击付费选项：pay_click-duo-report（单份报告）或 pay_click-membership（会员）
+       "pay_click"        点击付费选项：pay_click-duo-report（单份报告）、pay_click-membership（会员）、
+                          pay_click-duo-report-solo（单人用户点了还没解锁的报告 → 会直接打开邀请）
        "pay_email_submit" 在付费弹窗里提交邮箱（只在真正提交成功后记录），同样带 -duo-report 或 -membership
        "waitlist"         加入 Inner Lab 候补名单                    */
   function track(name, data) {
@@ -760,8 +771,42 @@
     const isDuo = !!(invite && current);
     // 单人用户：在“把红线牵给 TA”下面提示可以解锁双人报告
     document.querySelectorAll(".invite-unlock").forEach((n) => { n.textContent = t.inviteUnlock; n.classList.toggle("hidden", isDuo); });
+    renderPlans(isDuo);
     if (!isDuo) { box.classList.add("hidden"); return; }
-    // 双人合拍深度报告（付费意愿测试）：目录 + 模糊的“锁住”内容
+    const a = PERSONAS[invite.p], b = PERSONAS[current.persona];
+    $("duoTitle").textContent = t.duoTitle(invite.from, current.nickname);
+    $("duoArtA").innerHTML = symbolSVG(personaIcon(invite.p));
+    $("duoArtB").innerHTML = symbolSVG(personaIcon(current.persona));
+    $("duoNameA").textContent = invite.from;
+    $("duoNameB").textContent = current.nickname;
+    $("duoPA").textContent = a[lang].name;
+    $("duoPB").textContent = b[lang].name;
+    $("duoLine").textContent = (window.pairLine(a.style, b.style) || {})[lang] || "";
+    box.classList.remove("hidden");
+  }
+
+  // 付费意愿测试：两个选项。双人用户放在双人卡里；单人用户放在“今日小行动”下面。
+  // 单人用户的“单份报告”还不能买：显示“邀请 TA 完成测试后解锁”，按钮变成“先邀请 TA”。
+  function renderPlans(isDuo) {
+    const t = T[lang];
+    const sec = $("plansSection");
+    if (isDuo) $("duoPlansSlot").appendChild(sec);
+    else $("soloPlansSlot").appendChild(sec);
+    sec.classList.toggle("standalone", !isDuo);
+    $("planReport").classList.toggle("locked", !isDuo);
+    $("planReportLocked").classList.toggle("hidden", isDuo);
+    $("planReportLocked").textContent = "🔒 " + t.reportLockedNote;
+    $("planReportBtn").textContent = isDuo ? t.reportBtn : t.reportLockedBtn;
+    $("freeVs").textContent = "";
+    [[t.freeLabel, t.freeList, "fv-free"], [t.memberLabel, t.memberList, "fv-member"]].forEach(([label, list, cls]) => {
+      const row = document.createElement("p");
+      row.className = cls;
+      const b = document.createElement("b");
+      b.textContent = label;
+      row.append(b, document.createTextNode(list));
+      $("freeVs").appendChild(row);
+    });
+    // 双人合拍深度报告：目录 + 模糊的“锁住”内容
     const toc = $("reportToc");
     toc.innerHTML = "";
     t.reportItems.forEach((name, i) => {
@@ -787,16 +832,6 @@
       li.textContent = txt;
       perks.appendChild(li);
     });
-    const a = PERSONAS[invite.p], b = PERSONAS[current.persona];
-    $("duoTitle").textContent = t.duoTitle(invite.from, current.nickname);
-    $("duoArtA").innerHTML = symbolSVG(personaIcon(invite.p));
-    $("duoArtB").innerHTML = symbolSVG(personaIcon(current.persona));
-    $("duoNameA").textContent = invite.from;
-    $("duoNameB").textContent = current.nickname;
-    $("duoPA").textContent = a[lang].name;
-    $("duoPB").textContent = b[lang].name;
-    $("duoLine").textContent = (window.pairLine(a.style, b.style) || {})[lang] || "";
-    box.classList.remove("hidden");
   }
 
   /* ---------- 倒计时到明天 00:00 ---------- */
@@ -1284,7 +1319,7 @@
     err.textContent = "";
     try {
       if (!window.FORM_URL) { err.textContent = t.notReady; return; } // 没设置地址：不假装成功
-      await postEmail(window.FORM_URL, { email, lang, source: "duo-pay-test", plan: payPlan, pair: payContext });
+      await postEmail(window.FORM_URL, { email, lang, source: "pay-test", plan: payPlan, mode: invite ? "duo" : "solo", pair: payContext });
       track("pay_email_submit", { plan: payPlan });
       closePay();
       $("payEmail").value = ""; $("payAgree").checked = false;
@@ -1344,7 +1379,12 @@
     $("btnSave2").addEventListener("click", () => saveImage($("btnSave2"), makeCardImage, "save", "save_card"));
     $("btnSend2").addEventListener("click", onSend);
     // 点整张选项卡（或卡里的按钮）都会打开弹窗
-    $("planReport").addEventListener("click", () => openPay("duo-report"));
+    $("planReport").addEventListener("click", () => {
+      if (invite && current) { openPay("duo-report"); return; }
+      // 单人用户还不能买双人报告：记录“对报告感兴趣”，然后直接打开邀请
+      track("pay_click", { product: "duo-report-solo" });
+      onSend();
+    });
     $("planMember").addEventListener("click", () => openPay("membership"));
     $("payClose").addEventListener("click", closePay);
     $("payModal").addEventListener("click", (e) => { if (e.target === $("payModal")) closePay(); });

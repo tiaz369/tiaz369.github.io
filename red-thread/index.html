@@ -160,28 +160,8 @@
         <button class="btn btn-secondary wide" id="btnSaveDuo" type="button" data-i18n="saveDuo"></button>
         <p class="small-note" data-i18n="duoNote"></p>
 
-        <!-- 付费意愿测试：两个选项（还没有真实报告和会员，现在不会收费） -->
-        <div class="report">
-          <h4 class="report-title" data-i18n="reportTitle"></h4>
-          <div class="plans">
-            <!-- 选项 1：单份双人报告 -->
-            <div class="plan" id="planReport" data-plan="duo-report">
-              <p class="plan-name" data-i18n="planReportName"></p>
-              <p class="plan-price"><b data-i18n="planReportPrice"></b><span data-i18n="planReportTerms"></span></p>
-              <ol class="report-toc" id="reportToc"></ol>
-              <button class="btn btn-outline plan-btn" type="button" data-i18n="reportBtn"></button>
-            </div>
-            <!-- 选项 2：红线会员 -->
-            <div class="plan featured" id="planMember" data-plan="membership">
-              <span class="plan-badge" data-i18n="planMemberBadge"></span>
-              <p class="plan-name" data-i18n="planMemberName"></p>
-              <p class="plan-price"><b data-i18n="planMemberPrice"></b><span data-i18n="planMemberTerms"></span></p>
-              <ul class="plan-perks" id="memberPerks"></ul>
-              <button class="btn btn-gold plan-btn" type="button" data-i18n="planMemberBtn"></button>
-            </div>
-          </div>
-          <p class="small-note" data-i18n="reportNote"></p>
-        </div>
+        <!-- 双人用户：付费选项放在这里（由 app.js 移动） -->
+        <div id="duoPlansSlot"></div>
       </div>
 
       <!-- 2. 今日缘分卡 -->
@@ -220,6 +200,34 @@
         <div class="reading-item">
           <span class="reading-label" data-i18n="action"></span>
           <p id="rAction"></p>
+        </div>
+      </div>
+
+      <!-- 单人用户：付费选项放在这里（由 app.js 移动） -->
+      <div id="soloPlansSlot">
+        <!-- 付费意愿测试：两个选项（还没有真实报告和会员，现在不会收费） -->
+        <div class="report" id="plansSection">
+          <h4 class="report-title" data-i18n="plansTitle"></h4>
+          <div class="free-vs" id="freeVs"></div>
+          <div class="plans">
+            <!-- 选项 1：单份双人报告（单人用户：邀请后解锁） -->
+            <div class="plan" id="planReport" data-plan="duo-report">
+              <p class="plan-name" data-i18n="planReportName"></p>
+              <p class="plan-price"><b data-i18n="planReportPrice"></b><span data-i18n="planReportTerms"></span></p>
+              <ol class="report-toc" id="reportToc"></ol>
+              <p class="plan-locked hidden" id="planReportLocked"></p>
+              <button class="btn btn-outline plan-btn" id="planReportBtn" type="button"></button>
+            </div>
+            <!-- 选项 2：红线会员（所有人都可以选） -->
+            <div class="plan featured" id="planMember" data-plan="membership">
+              <span class="plan-badge" data-i18n="planMemberBadge"></span>
+              <p class="plan-name" data-i18n="planMemberName"></p>
+              <p class="plan-price"><b data-i18n="planMemberPrice"></b><span data-i18n="planMemberTerms"></span></p>
+              <ul class="plan-perks" id="memberPerks"></ul>
+              <button class="btn btn-gold plan-btn" type="button" data-i18n="planMemberBtn"></button>
+            </div>
+          </div>
+          <p class="small-note" data-i18n="reportNote"></p>
         </div>
       </div>
 

@@ -587,3 +587,22 @@ html[lang="en"] .plan-perks li { font-size: 16px; line-height: 1.35; }
 }
 html[lang="en"] .pay-chosen { font-size: 15px; }
 .pay-nocharge { margin-top: -2px; }
+
+/* ---------- 付费选项：所有人可见 ---------- */
+.report.standalone { margin: 6px 0 30px; }
+@media (min-width: 700px) {
+  .report.standalone { width: 680px; margin-left: calc(50% - 340px); }
+}
+.free-vs {
+  width: 100%; display: grid; gap: 6px; font-size: 13px; line-height: 1.55;
+  background: rgba(255, 255, 255, .55); border: 1px solid rgba(201, 166, 107, .5); border-radius: 12px; padding: 10px 12px;
+}
+html[lang="en"] .free-vs { font-size: 15px; line-height: 1.4; }
+.free-vs b { display: inline-block; min-width: 4.6em; margin-right: 6px; font-weight: 600; }
+.fv-free b { color: var(--ink-soft); }
+.fv-member b { color: var(--red); }
+.plan.locked .report-toc { opacity: .75; }
+.plan-locked { text-align: center; font-size: 13px; color: var(--red); }
+html[lang="en"] .plan-locked { font-size: 15px; }
+.free-vs p { display: grid; grid-template-columns: auto 1fr; column-gap: 10px; align-items: start; }
+.free-vs b { min-width: 0; margin-right: 0; white-space: nowrap; }
