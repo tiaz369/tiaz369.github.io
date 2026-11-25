@@ -160,11 +160,26 @@
         <button class="btn btn-secondary wide" id="btnSaveDuo" type="button" data-i18n="saveDuo"></button>
         <p class="small-note" data-i18n="duoNote"></p>
 
-        <!-- 双人合拍深度报告（付费意愿测试，还没有真实报告） -->
+        <!-- 付费意愿测试：两个选项（还没有真实报告和会员，现在不会收费） -->
         <div class="report">
-          <h4 class="report-title"><span data-i18n="reportTitle"></span><span class="report-price" data-i18n="reportPrice"></span></h4>
-          <ol class="report-toc" id="reportToc"></ol>
-          <button class="btn btn-gold" id="btnReport" type="button" data-i18n="reportBtn"></button>
+          <h4 class="report-title" data-i18n="reportTitle"></h4>
+          <div class="plans">
+            <!-- 选项 1：单份双人报告 -->
+            <div class="plan" id="planReport" data-plan="duo-report">
+              <p class="plan-name" data-i18n="planReportName"></p>
+              <p class="plan-price"><b data-i18n="planReportPrice"></b><span data-i18n="planReportTerms"></span></p>
+              <ol class="report-toc" id="reportToc"></ol>
+              <button class="btn btn-outline plan-btn" type="button" data-i18n="reportBtn"></button>
+            </div>
+            <!-- 选项 2：红线会员 -->
+            <div class="plan featured" id="planMember" data-plan="membership">
+              <span class="plan-badge" data-i18n="planMemberBadge"></span>
+              <p class="plan-name" data-i18n="planMemberName"></p>
+              <p class="plan-price"><b data-i18n="planMemberPrice"></b><span data-i18n="planMemberTerms"></span></p>
+              <ul class="plan-perks" id="memberPerks"></ul>
+              <button class="btn btn-gold plan-btn" type="button" data-i18n="planMemberBtn"></button>
+            </div>
+          </div>
           <p class="small-note" data-i18n="reportNote"></p>
         </div>
       </div>
@@ -262,12 +277,14 @@
   <div class="modal hidden" id="payModal" role="dialog" aria-modal="true" aria-labelledby="payModalTitle">
     <form class="modal-box" id="payForm" novalidate>
       <button class="modal-close" type="button" id="payClose" aria-label="Close">×</button>
-      <h3 id="payModalTitle" data-i18n="payModalTitle"></h3>
-      <p class="small-note" data-i18n="payModalDesc"></p>
+      <p class="pay-chosen" id="payChosen"></p>
+      <h3 id="payModalTitle"></h3>
+      <p class="small-note" id="payModalDesc"></p>
       <input type="email" id="payEmail" required autocomplete="email" data-i18n-placeholder="wlPlaceholder" />
       <label class="check"><input type="checkbox" id="payAgree" /><span data-i18n="payAgree"></span></label>
       <p class="form-error" id="payError" role="alert"></p>
       <button class="btn btn-primary" type="submit" data-i18n="paySubmit"></button>
+      <p class="small-note pay-nocharge" id="payNoCharge"></p>
     </form>
   </div>
 

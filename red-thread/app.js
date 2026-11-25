@@ -54,6 +54,16 @@
         "像古人的……一样，你们的故事里藏着一份……"
       ],
       reportBtn: "解锁报告",
+      // 两个付费选项（付费意愿测试，现在不会真的收费）
+      planReportName: "单份双人报告", planReportPrice: "£3.99", planReportTerms: "一次性付款",
+      planMemberName: "红线会员", planMemberPrice: "£4.99/月", planMemberTerms: "随时取消",
+      planMemberBadge: "更多人选择",
+      planMemberPerks: ["每周一个双人小仪式或聊天问题", "每月新卡和新典故", "所有双人报告免费", "春节、情人节、七夕限定卡"],
+      planMemberBtn: "加入会员",
+      planChosen: "你选择的是：",
+      memberModalTitle: "红线会员即将上线！留下邮箱，首发时送你 1 个月免费。",
+      memberThanks: "谢谢！会员上线时，我们会把 1 个月免费会员发到你的邮箱。",
+      noCharge: "现在不会收取任何费用。",
       reportNote: "报告根据你们的答题生成，仅供娱乐与关系反思。",
       inviteUnlock: "邀请 TA 完成测试，可以解锁你们的双人合拍报告。",
       locked: "今天的红线已系好，明天 00:00 再来",
@@ -148,6 +158,15 @@
         "Like the old tale of…, your story holds a quiet…"
       ],
       reportBtn: "Unlock the report",
+      planReportName: "Single Duo Report", planReportPrice: "£3.99", planReportTerms: "one-off",
+      planMemberName: "Red Thread Membership", planMemberPrice: "£4.99/month", planMemberTerms: "cancel anytime",
+      planMemberBadge: "Most popular",
+      planMemberPerks: ["A small ritual or conversation prompt for two, every week", "New cards and new stories every month", "Every Duo Report included free", "Limited cards for Lunar New Year, Valentine's Day and Qixi"],
+      planMemberBtn: "Become a member",
+      planChosen: "You chose: ",
+      memberModalTitle: "Membership is coming soon! Leave your email for one free month at launch.",
+      memberThanks: "Thank you! We'll email your free month at launch.",
+      noCharge: "You won't be charged anything now.",
       reportNote: "Based on your answers. For fun and reflection.",
       inviteUnlock: "Invite them to unlock your Duo Match Report.",
       locked: "Today's thread is tied. Come back after midnight.",
@@ -225,14 +244,18 @@
        "save_duo"         保存双人卡
        "send_thread"      点击「把红线牵给 TA」
        "invite_open"      通过双人链接打开网站
-       "pay_click"        点击付费按钮（解锁双人合拍深度报告）
-       "pay_email_submit" 在付费弹窗里提交邮箱（只在真正提交成功后记录）
+       "pay_click"        点击付费选项：pay_click-duo-report（单份报告）或 pay_click-membership（会员）
+       "pay_email_submit" 在付费弹窗里提交邮箱（只在真正提交成功后记录），同样带 -duo-report 或 -membership
        "waitlist"         加入 Inner Lab 候补名单                    */
   function track(name, data) {
-    // GoatCounter：每个事件在后台显示为 “event-事件名”
+    // GoatCounter：每个事件在后台显示为 “event-事件名”；
+    // 付费按钮会多带一个选项名，例如 “event-pay_click-membership”。
+    // 只允许 product / plan 这两个固定值，不会记录昵称、生日或邮箱。
+    const tag = data && (data.product || data.plan);
+    const path = "event-" + name + (tag && /^[a-z0-9-]+$/.test(tag) ? "-" + tag : "");
     const send = () => {
       if (window.goatcounter && window.goatcounter.count) {
-        window.goatcounter.count({ path: "event-" + name, title: name, event: true });
+        window.goatcounter.count({ path: path, title: path.slice(6), event: true });
         return true;
       }
       return false;
@@ -344,6 +367,7 @@
     if (current) renderResult(false);
     if ($("screen-book").classList.contains("is-active")) renderBook();
     if (!$("sheet").classList.contains("hidden")) closeSheet();
+    if (!$("payModal").classList.contains("hidden")) renderPayModal();
     store.lang = lang; save();
   }
 
@@ -755,6 +779,13 @@
       lock.textContent = "🔒";
       li.append(h, blur, lock);
       toc.appendChild(li);
+    });
+    const perks = $("memberPerks");
+    perks.innerHTML = "";
+    t.planMemberPerks.forEach((txt) => {
+      const li = document.createElement("li");
+      li.textContent = txt;
+      perks.appendChild(li);
     });
     const a = PERSONAS[invite.p], b = PERSONAS[current.persona];
     $("duoTitle").textContent = t.duoTitle(invite.from, current.nickname);
@@ -1213,10 +1244,25 @@
   /* ---------- 付费意愿测试弹窗 ---------- */
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
   let payContext = "";
-  function openPay() {
-    track("pay_click", { product: "duo-report" });
+  let payPlan = "duo-report"; // "duo-report" 或 "membership"
+  const PLANS = ["duo-report", "membership"];
+  function renderPayModal() {
+    const t = T[lang];
+    const member = payPlan === "membership";
+    $("payModalTitle").textContent = member ? t.memberModalTitle : t.payModalTitle;
+    $("payModalDesc").textContent = member ? "" : t.payModalDesc;
+    $("payModalDesc").classList.toggle("hidden", member);
+    $("payChosen").textContent = t.planChosen + (member
+      ? t.planMemberName + " · " + t.planMemberPrice
+      : t.planReportName + " · " + t.planReportPrice);
+    $("payNoCharge").textContent = t.noCharge;
+  }
+  function openPay(plan) {
+    payPlan = PLANS.includes(plan) ? plan : "duo-report";
+    track("pay_click", { product: payPlan });
     // 记下是哪一对人格（例如 05x12），提交邮箱时一起发给 Formspree，方便以后分析
     payContext = invite && current ? pad2(invite.p + 1) + "x" + pad2(current.persona + 1) : "";
+    renderPayModal();
     $("payError").textContent = "";
     $("payModal").classList.remove("hidden");
     setTimeout(() => $("payEmail").focus(), 50);
@@ -1238,11 +1284,11 @@
     err.textContent = "";
     try {
       if (!window.FORM_URL) { err.textContent = t.notReady; return; } // 没设置地址：不假装成功
-      await postEmail(window.FORM_URL, { email, lang, source: "duo-report", pair: payContext });
-      track("pay_email_submit");
+      await postEmail(window.FORM_URL, { email, lang, source: "duo-pay-test", plan: payPlan, pair: payContext });
+      track("pay_email_submit", { plan: payPlan });
       closePay();
       $("payEmail").value = ""; $("payAgree").checked = false;
-      toast(t.payThanks);
+      toast(payPlan === "membership" ? t.memberThanks : t.payThanks);
     } catch (ex) {
       err.textContent = t.wlError;
     }
@@ -1297,7 +1343,9 @@
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet(); });
     $("btnSave2").addEventListener("click", () => saveImage($("btnSave2"), makeCardImage, "save", "save_card"));
     $("btnSend2").addEventListener("click", onSend);
-    $("btnReport").addEventListener("click", openPay);
+    // 点整张选项卡（或卡里的按钮）都会打开弹窗
+    $("planReport").addEventListener("click", () => openPay("duo-report"));
+    $("planMember").addEventListener("click", () => openPay("membership"));
     $("payClose").addEventListener("click", closePay);
     $("payModal").addEventListener("click", (e) => { if (e.target === $("payModal")) closePay(); });
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePay(); });
