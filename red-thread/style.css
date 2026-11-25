@@ -606,3 +606,51 @@ html[lang="en"] .free-vs { font-size: 15px; line-height: 1.4; }
 html[lang="en"] .plan-locked { font-size: 15px; }
 .free-vs p { display: grid; grid-template-columns: auto 1fr; column-gap: 10px; align-items: start; }
 .free-vs b { min-width: 0; margin-right: 0; white-space: nowrap; }
+
+/* =========================================================
+   小月老吉祥物
+   ========================================================= */
+.mascot { display: block; height: auto; pointer-events: none; user-select: none; -webkit-user-select: none; }
+.mascot-row { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.bubble {
+  position: relative; background: #FFFDF8; border: 1px solid rgba(201, 166, 107, .8); border-radius: 14px;
+  padding: 7px 12px; font-size: 14px; line-height: 1.4; color: var(--ink); max-width: 170px; text-align: left;
+  box-shadow: 0 4px 12px rgba(43, 37, 34, .06);
+}
+.bubble::before {
+  content: ""; position: absolute; left: -7px; top: 50%; width: 12px; height: 12px; margin-top: -6px;
+  background: #FFFDF8; border-left: 1px solid rgba(201, 166, 107, .8); border-bottom: 1px solid rgba(201, 166, 107, .8);
+  transform: rotate(45deg);
+}
+html[lang="en"] .bubble { font-size: 16px; line-height: 1.25; }
+.mascot-home { width: 92px; animation: mascotWave 3.2s ease-in-out infinite; transform-origin: 50% 90%; }
+@keyframes mascotWave { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-4deg) translateY(-2px); } }
+.mascot-quiz { width: 74px; margin: -4px auto -10px; }
+.mascot-tie { width: 150px; animation: mascotBob 1.6s ease-in-out infinite; }
+@keyframes mascotBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.mascot-result-row { margin: -8px 0 10px; }
+.mascot-result { width: 84px; }
+.mascot-book { width: 90px; margin: -6px auto 2px; }
+#screen-home .home-inner { gap: 10px; }
+@media (max-height: 700px) {
+  .mascot-home { width: 72px; }
+  .mascot-quiz { width: 60px; }
+}
+/* 中等屏幕：稍微压缩，让按钮在第一屏 */
+@media (max-height: 800px) and (min-height: 641px) {
+  #screen-home .home-inner { gap: 8px; }
+  .mascot-home { width: 70px; }
+  .fan { transform: scale(.9); margin-top: -8px; margin-bottom: -18px; }
+}
+/* 小屏手机（如 iPhone SE）：首页压缩一点，让“开始测试”按钮不用滚动就能看到 */
+@media (max-height: 640px) {
+  #app { padding-top: 58px; }
+  #screen-home .home-inner { gap: 6px; min-height: 0; }
+  .mascot-home { width: 54px; }
+  #screen-home .bubble { font-size: 13px; padding: 5px 10px; }
+  #screen-home .title { font-size: 26px; }
+  #screen-home .subtitle { font-size: 14px; line-height: 1.55; }
+  .fan { transform: scale(.72); margin-top: -26px; margin-bottom: -46px; }
+  .tags { margin: 0; }
+  .tags li { font-size: 12px; padding: 2px 10px; }
+}

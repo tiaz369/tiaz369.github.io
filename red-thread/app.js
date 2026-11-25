@@ -17,6 +17,8 @@
       aboutQ: "什么是红线？",
       aboutA: "传说唐代有位“月下老人”，用一根看不见的红线系住命中注定的两个人。无论相隔多远，红线都会把他们牵到一起。",
       start: "开始测试",
+      mascotHello: "来，月老帮你牵根线",
+      mascotTied: "红线系好啦！",
       seeToday: "查看今天的红线",
       seeDuo: "看看我们的组合",
       invite: (n) => n + " 给你牵了一根红线，看看你们是什么组合？",
@@ -126,6 +128,8 @@
       aboutQ: "What is the Red Thread?",
       aboutA: "Chinese legend tells of the Old Man Under the Moon, who ties an invisible red thread between two people destined to meet. However far apart, the thread brings them together.",
       start: "Start",
+      mascotHello: "Come, let the Old Man tie your thread",
+      mascotTied: "Your thread is tied!",
       seeToday: "See today's thread",
       seeDuo: "See what we are together",
       invite: (n) => n + " sent you a red thread. See what you are together?",
@@ -682,6 +686,7 @@
     const got = getCollected();
     const done = isComplete();
     $("bookTitle").textContent = t.bookTitle;
+    $("bookMascot").src = "images/mascot/web/" + (done ? "cheer" : "hug") + ".webp";
     $("bookDesc").textContent = done ? t.bookDone : t.bookDesc(got.length, CARDS.length);
     const legend = $("legendBtn");
     legend.textContent = done ? t.legendOpen : t.legendLocked(got.length, CARDS.length);
@@ -854,7 +859,11 @@
   const ZH = '"Noto Serif SC", serif', EN = '"Cormorant Garamond", "Noto Serif SC", serif';
   const INK = "#2B2522", SOFT = "#6E625A", RED = "#B8302A", GOLD = "#C9A66B", PAPER = "#F6F0E6";
 
+  async function loadHead() {
+    if (!headImg) headImg = await loadImage("images/mascot/web/head.webp").catch(() => null);
+  }
   async function ensureFonts(sample) {
+    await loadHead();
     try {
       await Promise.all([
         document.fonts.load('500 60px "Noto Serif SC"', sample),
@@ -987,20 +996,26 @@
       }
     }
   }
+  let headImg = null; // 小月老头像，画在结果卡左下角品牌字旁边
   function drawFooter(ctx, W, H, t) {
     const qrSize = 132;
+    const textX = headImg ? 208 : 108;
+    if (headImg) {
+      const hw = 86, hh = Math.round(86 * headImg.height / headImg.width);
+      ctx.drawImage(headImg, 108, H - 100 - hh, hw, hh);
+    }
     drawQR(ctx, siteUrl(), W - 100 - qrSize, H - 100 - qrSize, qrSize);
     ctx.textAlign = "left";
     ctx.fillStyle = "rgba(110,98,90,.8)";
     ctx.font = (lang === "zh" ? "500 28px " + ZH : "500 32px " + EN);
-    ctx.fillText(t.brand, 108, H - 132);
+    ctx.fillText(t.brand, textX, H - 132);
     // 小徽章：2027 爱情特别版
     ctx.font = (lang === "zh" ? "400 20px " + ZH : "500 22px " + EN);
     const bw = ctx.measureText(t.edition).width + 28;
     ctx.strokeStyle = GOLD; ctx.lineWidth = 1.5;
-    roundRect(ctx, 108, H - 116, bw, 34, 17); ctx.stroke();
+    roundRect(ctx, textX, H - 116, bw, 34, 17); ctx.stroke();
     ctx.fillStyle = GOLD;
-    ctx.fillText(t.edition, 122, H - 92);
+    ctx.fillText(t.edition, textX + 14, H - 92);
   }
   function knot(ctx, x, y) {
     ctx.beginPath();

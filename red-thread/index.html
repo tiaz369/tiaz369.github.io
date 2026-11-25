@@ -26,6 +26,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+SC:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <!-- 网站小图标：小月老头像 -->
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 
   <!-- 统计（Cloudflare Web Analytics + GoatCounter）在 config.js 里设置，不用改这里 -->
 </head>
@@ -41,6 +45,11 @@
     <section class="screen is-active" id="screen-home">
       <div class="home-inner">
         <p class="invite hidden" id="inviteLine"></p>
+        <!-- 小月老：挥手 -->
+        <div class="mascot-row">
+          <img class="mascot mascot-home" src="images/mascot/web/wave.webp" alt="" width="450" height="480" />
+          <p class="bubble" data-i18n="mascotHello"></p>
+        </div>
         <p class="edition-badge" data-i18n="edition"></p>
         <h1 class="title"></h1>
         <p class="subtitle" data-i18n="subtitle"></p>
@@ -110,6 +119,8 @@
           <span class="quiz-step" id="quizStep"></span>
         </div>
         <div class="quiz-dots" id="quizDots" aria-hidden="true"><i></i><i></i><i></i></div>
+        <!-- 小月老：思考 -->
+        <img class="mascot mascot-quiz" src="images/mascot/web/think.webp" alt="" width="375" height="480" />
         <h2 class="quiz-q" id="quizQ"></h2>
         <div class="quiz-options" id="quizOptions" role="radiogroup"></div>
       </div>
@@ -117,6 +128,8 @@
 
     <!-- 屏 3 · 系线动画 -->
     <section class="screen" id="screen-tie" aria-live="polite">
+      <!-- 小月老：双手牵红线 -->
+      <img class="mascot mascot-tie" src="images/mascot/web/pull.webp" alt="" width="389" height="480" />
       <svg class="tie-svg" viewBox="0 0 300 160" aria-hidden="true">
         <path class="tie-left"  d="M-10 80 C 50 40, 100 120, 140 80" />
         <path class="tie-right" d="M310 80 C 250 120, 200 40, 160 80" />
@@ -128,6 +141,11 @@
     <!-- 屏 4 · 结果 -->
     <section class="screen" id="screen-result">
       <!-- 1. 人格 -->
+      <!-- 小月老：欢呼 -->
+      <div class="mascot-row mascot-result-row">
+        <img class="mascot mascot-result" src="images/mascot/web/cheer.webp" alt="" width="389" height="480" />
+        <p class="bubble" data-i18n="mascotTied"></p>
+      </div>
       <div class="persona">
         <div class="persona-art" id="pArt"></div>
         <p class="persona-label" id="pLabel"></p>
@@ -262,6 +280,8 @@
       <div class="quiz-top">
         <button class="btn-link back" id="bookBack" type="button" data-i18n="bookBack"></button>
       </div>
+      <!-- 小月老：抱线团（集齐后换成欢呼） -->
+      <img class="mascot mascot-book" id="bookMascot" src="images/mascot/web/hug.webp" alt="" width="374" height="480" />
       <h2 class="form-title" id="bookTitle"></h2>
       <p class="book-desc" id="bookDesc"></p>
       <button class="legend-btn" id="legendBtn" type="button"></button>
