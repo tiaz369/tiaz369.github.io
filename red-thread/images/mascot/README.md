@@ -10,4 +10,6 @@
 | yuelao-pull.png | 双手牵红线 | 系线动画、分享预览图（主形象） |
 | yuelao-hug.png | 抱线团 | 红线册、等待/加载 |
 | yuelao-cheer.png | 欢呼 + 爱心线 | 结果页、双人配对成功、集齐 12 张 |
-| yuelao-cheer-half.png | 欢呼（半身） | 头像、小尺寸 |
+| yuelao-cheer-half.png | 欢呼（半身） | 分享图、大头像 |
+| yuelao-head.png | 头像（透明） | 网站标签页小图标、页面里的小头像 |
+| yuelao-head-appicon.png | 头像（米色底 #F6F0E6） | App 图标、社交媒体头像 |
